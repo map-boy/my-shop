@@ -64,8 +64,6 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     environment: production
-    # Skipped automatically until FIREBASE_SERVICE_ACCOUNT is added to the
-    # "production" environment secrets.
     if: ${{ github.event_name != 'pull_request' }}
     steps:
       - uses: actions/checkout@v4
@@ -76,14 +74,23 @@ jobs:
           path: dist
 
       - name: Deploy
-        if: ${{ env.FIREBASE_SERVICE_ACCOUNT != '' }}
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          FIREBASE_PROJECT: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
         run: |
+          # A step's own `env:` is not visible to its `if:`, so the guard has to
+          # live here rather than in a step condition.
+          if [ -z "$FIREBASE_SERVICE_ACCOUNT" ]; then
+            echo "::notice::FIREBASE_SERVICE_ACCOUNT is not set in the 'production' environment - skipping deploy."
+            echo "Add a service account key with the 'Firebase Hosting Admin' role to deploy automatically."
+            exit 0
+          fi
+
           printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/sa.json"
           export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
+          trap 'rm -f "$RUNNER_TEMP/sa.json"' EXIT
+
           npx --yes firebase-tools@latest deploy \
             --only hosting,firestore:rules,storage \
-            --project "${{ secrets.VITE_FIREBASE_PROJECT_ID }}" \
+            --project "${FIREBASE_PROJECT:-my-shop-84749}" \
             --non-interactive
-          rm -f "$RUNNER_TEMP/sa.json"
