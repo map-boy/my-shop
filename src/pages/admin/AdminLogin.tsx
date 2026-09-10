@@ -125,6 +125,8 @@ const AdminLogin: React.FC = () => {
         >
           <ArrowLeft size={13} /> Back to the shop
         </Link>
+
+        <p className="mt-6 text-center font-mono text-[10px] text-ink-700">build {__BUILD_ID__}</p>
       </div>
     </div>
   );
