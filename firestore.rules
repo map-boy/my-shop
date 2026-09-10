@@ -1,0 +1,118 @@
+rules_version = '2';
+
+// ---------------------------------------------------------------------------
+// my-shop — Firestore security rules
+//
+// Model
+//   * Everything the storefront shows is world-readable.
+//   * Everything is writable by administrators only.
+//   * An administrator is either the bootstrap OWNER (hard-coded below so the
+//     very first sign-in always works) or any Google account whose e-mail has
+//     a document in /admins/{email}.
+//   * Only an OWNER can add/remove administrators.
+// ---------------------------------------------------------------------------
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // The bootstrap super administrator. Keep in sync with VITE_OWNER_EMAIL.
+    function ownerEmail() {
+      return 'techubwenge@gmail.com';
+    }
+
+    function signedIn() {
+      return request.auth != null && request.auth.token.email != null;
+    }
+
+    function email() {
+      return request.auth.token.email.lower();
+    }
+
+    function adminDoc() {
+      return get(/databases/$(database)/documents/admins/$(email())).data;
+    }
+
+    function adminExists() {
+      return exists(/databases/$(database)/documents/admins/$(email()));
+    }
+
+    function isAdmin() {
+      return signedIn() && (
+        email() == ownerEmail() ||
+        (adminExists() && adminDoc().get('disabled', false) == false)
+      );
+    }
+
+    function isOwner() {
+      return signedIn() && (
+        email() == ownerEmail() ||
+        (adminExists() && adminDoc().get('role', 'admin') == 'owner'
+                       && adminDoc().get('disabled', false) == false)
+      );
+    }
+
+    // --- Administrators -----------------------------------------------------
+    match /admins/{adminEmail} {
+      // An admin may read the roster (the dashboard shows it).
+      // A signed-in user may read *their own* record so the app can decide
+      // whether to let them into the dashboard.
+      allow read: if isAdmin() || (signedIn() && adminEmail == email());
+      // Bootstrap: the owner may self-provision their own record.
+      allow create: if isOwner() || (signedIn() && email() == ownerEmail() && adminEmail == ownerEmail());
+      allow update, delete: if isOwner() && adminEmail != ownerEmail();
+    }
+
+    // --- Catalog ------------------------------------------------------------
+    match /products/{id}   { allow read: if true; allow write: if isAdmin(); }
+    match /categories/{id} { allow read: if true; allow write: if isAdmin(); }
+    match /collections/{id}{ allow read: if true; allow write: if isAdmin(); }
+    match /coupons/{id}    { allow read: if true; allow write: if isAdmin(); }
+    match /reviews/{id}    {
+      allow read: if true;
+      allow create: if true;                 // shoppers may leave a review
+      allow update, delete: if isAdmin();
+    }
+
+    // --- Storefront configuration ------------------------------------------
+    match /settings/{id}   { allow read: if true; allow write: if isAdmin(); }
+    match /pages/{id}      { allow read: if true; allow write: if isAdmin(); }
+    match /media/{id}      { allow read: if true; allow write: if isAdmin(); }
+
+    // --- Orders -------------------------------------------------------------
+    match /orders/{id} {
+      // Anyone may place an order (guest checkout).
+      allow create: if true;
+      // Only admins can browse/modify orders. A signed-in shopper can read
+      // their own order.
+      allow read: if isAdmin() || (signedIn() && resource.data.customerEmail == email());
+      allow update, delete: if isAdmin();
+    }
+
+    // --- Customers & inbox --------------------------------------------------
+    match /customers/{id} {
+      allow read: if isAdmin() || (signedIn() && id == email());
+      allow create, update: if true;         // upserted at checkout
+      allow delete: if isAdmin();
+    }
+
+    match /messages/{id} {
+      allow create: if true;                 // contact form
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /subscribers/{id} {
+      allow create: if true;                 // newsletter
+      allow read, update, delete: if isAdmin();
+    }
+
+    // --- Audit trail --------------------------------------------------------
+    match /activity/{id} {
+      allow read: if isAdmin();
+      allow create: if isAdmin();
+      allow update, delete: if isOwner();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
