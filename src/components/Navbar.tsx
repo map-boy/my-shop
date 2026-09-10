@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { Menu, Search, ShoppingBag, X, Phone, ChevronRight } from 'lucide-react';
 import { useStore } from '../context/StoreContext';
+import DeliveryBanner from './DeliveryBanner';
 import { useCart } from '../context/CartContext';
 import { cn } from '../lib/utils';
 
@@ -60,6 +61,7 @@ const Navbar: React.FC = () => {
   return (
     <>
       <AnnouncementBar />
+      <DeliveryBanner />
 
       <header
         className={cn(

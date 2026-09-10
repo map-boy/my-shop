@@ -1,9 +1,10 @@
 // FILE: src/pages/admin/AdminSettings.tsx
 import React, { useState } from 'react';
 import {
-  CreditCard, Globe, Palette, Phone, Search as SearchIcon, Share2, ShoppingBag, Store, TriangleAlert,
+  CreditCard, Globe, Palette, Phone, Search as SearchIcon, Share2, ShoppingBag, Store, TriangleAlert, Truck,
 } from 'lucide-react';
 import { useSettingsDraft } from '../../hooks/useSettingsDraft';
+import { useStore } from '../../context/StoreContext';
 import ImageInput from '../../components/ImageInput';
 import SaveBar from '../../components/SaveBar';
 import { Field, Input, Select, Textarea, Toggle } from '../../components/ui';
@@ -52,6 +53,7 @@ const ColorField: React.FC<{ label: string; hint?: string; value: string; onChan
 
 const AdminSettings: React.FC = () => {
   const { draft, set, setIn, save, reset, busy, dirty } = useSettingsDraft('store settings');
+  const { money } = useStore();
   const [tab, setTab] = useState<Tab>('identity');
 
   return (
@@ -247,6 +249,64 @@ const AdminSettings: React.FC = () => {
                 <Field label="Delivery note" hint="Shown on the product page and at checkout.">
                   <Textarea value={draft.shipping.note} onChange={(e) => setIn('shipping', { note: e.target.value })} />
                 </Field>
+              </Panel>
+
+              <Panel
+                title="Delivery banner"
+                description="A strip across the top of every page telling shoppers what they need to spend to get free delivery."
+              >
+                <Toggle
+                  checked={draft.shipping.banner.enabled}
+                  onChange={(v) => setIn('shipping', { banner: { ...draft.shipping.banner, enabled: v } })}
+                  label="Show the delivery banner"
+                  hint="Hidden automatically if you switch delivery charges off or set the threshold to 0."
+                />
+
+                <Field
+                  label="Message"
+                  hint="Write {amount} where the money should go — it is filled in from the free-delivery threshold above, so the banner can never contradict the real rule."
+                >
+                  <Input
+                    value={draft.shipping.banner.text}
+                    onChange={(e) => setIn('shipping', { banner: { ...draft.shipping.banner, text: e.target.value } })}
+                    placeholder="Order for more than {amount} and we deliver to you free."
+                  />
+                </Field>
+
+                <div className="grid gap-5 sm:grid-cols-2">
+                  <ColorField
+                    label="Background"
+                    value={draft.shipping.banner.bg}
+                    onChange={(v) => setIn('shipping', { banner: { ...draft.shipping.banner, bg: v } })}
+                  />
+                  <ColorField
+                    label="Text colour"
+                    value={draft.shipping.banner.color}
+                    onChange={(v) => setIn('shipping', { banner: { ...draft.shipping.banner, color: v } })}
+                  />
+                </div>
+
+                <div>
+                  <p className="label">Exactly what shoppers will see</p>
+                  <div
+                    className="flex items-center justify-center gap-2.5 rounded-xl px-4 py-3 text-[13px] font-bold"
+                    style={{ background: draft.shipping.banner.bg, color: draft.shipping.banner.color }}
+                  >
+                    <Truck size={16} />
+                    {draft.shipping.banner.text.replace(
+                      /\{amount\}/gi,
+                      money(draft.shipping.freeOver),
+                    )}
+                  </div>
+                  {(!draft.shipping.enabled || draft.shipping.freeOver <= 0) && (
+                    <p className="mt-2 text-[11px] text-amber-300">
+                      The banner is hidden on the live site right now because
+                      {!draft.shipping.enabled
+                        ? ' delivery charges are switched off.'
+                        : ' the free-delivery threshold is 0.'}
+                    </p>
+                  )}
+                </div>
               </Panel>
 
               <Panel title="Tax" description="Added on top of the discounted subtotal at checkout.">

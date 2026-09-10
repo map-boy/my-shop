@@ -23,7 +23,7 @@ export const DEFAULT_SETTINGS: StoreSettings = {
 
   announcement: {
     enabled: true,
-    text: 'We deliver free on every order over 5,000 FRW · Pay with MoMo or cash on delivery',
+    text: 'Pay with MoMo Pay 1105179 or cash on delivery · Call +250 780 867 473',
     link: '/shop',
     bg: '#111827',
     color: '#ffffff',
@@ -150,6 +150,12 @@ export const DEFAULT_SETTINGS: StoreSettings = {
     flatRate: 1000,
     freeOver: 5000,
     note: 'Orders over 5,000 FRW are delivered free. Below that a small delivery fee applies, and we confirm it with you on the phone before dispatch.',
+    banner: {
+      enabled: true,
+      text: 'Order for more than {amount} and we deliver to you free.',
+      bg: '#e0b34d',
+      color: '#111827',
+    },
   },
   tax: { enabled: false, rate: 18, label: 'VAT' },
   payments: {

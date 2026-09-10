@@ -1,19 +1,24 @@
 // FILE: src/pages/ProductDetail.tsx
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   ChevronRight, Minus, Plus, RefreshCw, ShieldCheck, ShoppingBag, Star, Truck,
 } from 'lucide-react';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../lib/firebase';
 import { useStore } from '../context/StoreContext';
+import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { useToast } from '../context/ToastContext';
 import ProductCard from '../components/ProductCard';
 import { Badge, Button, PageLoader, SectionHeading } from '../components/ui';
+import type { Product } from '../lib/types';
 import { cn, discountPercent, PLACEHOLDER_IMAGE } from '../lib/utils';
 
 const ProductDetail: React.FC = () => {
   const { slug = '' } = useParams();
-  const { liveProducts, loading, money, settings } = useStore();
+  const { products, liveProducts, loading, money, settings } = useStore();
+  const { isAdmin } = useAuth();
   const { add, setOpen } = useCart();
   const toast = useToast();
   const navigate = useNavigate();
@@ -23,10 +28,50 @@ const ProductDetail: React.FC = () => {
   const [choices, setChoices] = useState<Record<string, string>>({});
   const [tab, setTab] = useState<'description' | 'delivery'>('description');
 
-  const product = useMemo(
-    () => liveProducts.find((p) => p.slug === slug || p.id === slug),
-    [liveProducts, slug],
-  );
+  // Look through the whole catalogue, not just the live products, so an
+  // administrator can open a draft to preview it. Visibility is decided below.
+  const fromCatalogue = useMemo(() => {
+    const key = slug.trim().toLowerCase();
+    return (
+      products.find((p) => p.slug?.toLowerCase() === key) ??
+      products.find((p) => p.id === slug) ??
+      null
+    );
+  }, [products, slug]);
+
+  // A direct link or a refresh can arrive before the catalogue listener has
+  // delivered anything. Rather than showing "not found", fetch the one
+  // document by id and let the listener take over when it catches up.
+  const [fetched, setFetched] = useState<Product | null>(null);
+  const [lookupDone, setLookupDone] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    setFetched(null);
+    setLookupDone(false);
+
+    if (fromCatalogue || loading) {
+      setLookupDone(true);
+      return;
+    }
+
+    getDoc(doc(db, 'products', slug))
+      .then((snap) => {
+        if (cancelled) return;
+        if (snap.exists()) setFetched({ id: snap.id, ...(snap.data() as Omit<Product, 'id'>) });
+      })
+      .catch(() => undefined)
+      .finally(() => !cancelled && setLookupDone(true));
+
+    return () => {
+      cancelled = true;
+    };
+  }, [slug, fromCatalogue, loading]);
+
+  const found = fromCatalogue ?? fetched;
+  // Shoppers only ever see active products; admins can preview anything.
+  const product = found && (found.status === 'active' || isAdmin) ? found : undefined;
+  const hiddenFromShoppers = !!found && found.status !== 'active';
 
   const related = useMemo(
     () =>
@@ -36,7 +81,7 @@ const ProductDetail: React.FC = () => {
     [liveProducts, product],
   );
 
-  if (loading) return <PageLoader label="Loading product" />;
+  if (loading || !lookupDone) return <PageLoader label="Loading product" />;
 
   if (!product) {
     return (
@@ -91,6 +136,13 @@ const ProductDetail: React.FC = () => {
           </>
         )}
       </nav>
+
+      {hiddenFromShoppers && (
+        <div className="mb-8 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+          <strong>Only you can see this.</strong> This product is {product.status}, so it does not appear
+          in the shop. Publish it from Dashboard → Products to make it public.
+        </div>
+      )}
 
       <div className="grid gap-10 lg:grid-cols-2 lg:gap-16">
         {/* Gallery */}

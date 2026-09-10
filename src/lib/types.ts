@@ -261,7 +261,18 @@ export interface StoreSettings {
   sectionOrder: string[];
 
   /* Commerce */
-  shipping: { enabled: boolean; flatRate: number; freeOver: number; note: string };
+  shipping: {
+    enabled: boolean;
+    flatRate: number;
+    freeOver: number;
+    note: string;
+    /**
+     * Strip shown across the storefront. `{amount}` in the text is replaced
+     * with the free-delivery threshold, formatted in the store currency, so
+     * the banner can never drift out of sync with the actual rule.
+     */
+    banner: { enabled: boolean; text: string; bg: string; color: string };
+  };
   tax: { enabled: boolean; rate: number; label: string };
   payments: { cod: boolean; mobileMoney: boolean; card: boolean; bank: boolean; instructions: string };
   checkout: { requirePhone: boolean; allowNotes: boolean; minOrder: number };
