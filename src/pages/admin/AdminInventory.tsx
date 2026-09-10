@@ -16,7 +16,7 @@ import { cn, errorMessage, PLACEHOLDER_IMAGE } from '../../lib/utils';
  */
 const AdminInventory: React.FC = () => {
   const { products, money } = useStore();
-  const { admin } = useAuth();
+  const { admin, isSeller } = useAuth();
   const toast = useToast();
 
   const [search, setSearch] = useState('');
@@ -24,9 +24,17 @@ const AdminInventory: React.FC = () => {
   const [drafts, setDrafts] = useState<Record<string, number>>({});
   const [busy, setBusy] = useState(false);
 
+  const visibleProducts = useMemo(
+    () =>
+      isSeller && admin?.email
+        ? products.filter((p) => (p.sellerId ?? '').toLowerCase() === admin.email.toLowerCase())
+        : products,
+    [products, isSeller, admin?.email],
+  );
+
   const rows = useMemo(() => {
     const needle = search.trim().toLowerCase();
-    return products
+    return visibleProducts
       .filter((p) => {
         if (filter === 'low') return p.trackStock && p.stock > 0 && p.stock <= 5;
         if (filter === 'out') return p.trackStock && p.stock <= 0;
@@ -35,11 +43,11 @@ const AdminInventory: React.FC = () => {
       })
       .filter((p) => !needle || p.name.toLowerCase().includes(needle) || p.sku?.toLowerCase().includes(needle))
       .sort((a, b) => Number(b.trackStock) - Number(a.trackStock) || a.stock - b.stock);
-  }, [products, search, filter]);
+  }, [visibleProducts, search, filter]);
 
   const stockValue = useMemo(
-    () => products.reduce((sum, p) => sum + (p.trackStock ? p.stock * p.price : 0), 0),
-    [products],
+    () => visibleProducts.reduce((sum, p) => sum + (p.trackStock ? p.stock * p.price : 0), 0),
+    [visibleProducts],
   );
 
   const dirty = Object.keys(drafts).length;

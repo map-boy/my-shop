@@ -29,7 +29,7 @@ const STATUS_TONE: Record<OrderStatus, 'neutral' | 'green' | 'amber' | 'red' | '
 const AdminOrders: React.FC = () => {
   const { orders } = useAdminData();
   const { products, money } = useStore();
-  const { admin } = useAuth();
+  const { admin, isSeller, managesEverything } = useAuth();
   const toast = useToast();
 
   const [search, setSearch] = useState('');
@@ -178,6 +178,7 @@ const AdminOrders: React.FC = () => {
           <h1 className="mt-2 font-display text-3xl font-bold text-white sm:text-4xl">Orders</h1>
           <p className="mt-2 text-sm text-ink-400">
             {totals.count} order{totals.count === 1 ? '' : 's'} · {money(totals.paid)} collected
+          {isSeller && ' · orders containing your items'}
           </p>
         </div>
         <Button variant="outline" icon={<Download size={16} />} onClick={exportCsv} className="border-white/20 text-white hover:bg-white/10">
@@ -275,7 +276,17 @@ const AdminOrders: React.FC = () => {
             </header>
 
             <div className="thin-scrollbar flex-1 overflow-y-auto px-6 py-6">
-              {/* Status controls */}
+              {/* Status controls — the platform's, not a seller's: one order can
+                  hold items from several sellers. */}
+              {!managesEverything ? (
+                <div className="mb-7 rounded-xl border border-white/10 bg-white/[0.03] p-4 text-xs leading-relaxed text-ink-400">
+                  <p className="mb-1 font-bold uppercase tracking-wider text-ink-300">Your items in this order</p>
+                  <p>
+                    Orders can contain items from several sellers, so only the shop owner changes an
+                    order's status. Pack your items and the owner confirms and settles with you.
+                  </p>
+                </div>
+              ) : (
               <div className="mb-7 grid gap-3 sm:grid-cols-2">
                 <div>
                   <p className="label">Order status</p>
@@ -300,26 +311,49 @@ const AdminOrders: React.FC = () => {
                 </div>
               </div>
 
-              <p className="mb-4 text-[11px] text-ink-500">
-                Marking an order <strong className="text-ink-300">confirmed</strong> the first time subtracts the
-                items from stock.
-              </p>
+              )}
+
+              {managesEverything && (
+                <p className="mb-4 text-[11px] text-ink-500">
+                  Marking an order <strong className="text-ink-300">confirmed</strong> the first time subtracts the
+                  items from stock.
+                </p>
+              )}
 
               {/* Items */}
               <section className="mb-7 rounded-2xl border border-white/10 bg-white/[0.02] p-5">
                 <h3 className="mb-4 text-[11px] font-bold uppercase tracking-[0.16em] text-ink-500">Items</h3>
                 <ul className="space-y-3">
-                  {active.items.map((it, i) => (
-                    <li key={i} className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="truncate text-sm text-white">{it.name}</p>
-                        <p className="text-[11px] text-ink-500">
-                          {it.variant ? `${it.variant} · ` : ''}{it.qty} × {money(it.price)}
-                        </p>
-                      </div>
-                      <span className="shrink-0 text-sm font-semibold text-white">{money(it.price * it.qty)}</span>
-                    </li>
-                  ))}
+                  {active.items.map((it, i) => {
+                    const mine =
+                      !isSeller ||
+                      (it.sellerId ?? '').toLowerCase() === (admin?.email ?? '').toLowerCase();
+                    return (
+                      <li
+                        key={i}
+                        className={cn(
+                          'flex items-start justify-between gap-3',
+                          !mine && 'opacity-40',
+                        )}
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate text-sm text-white">
+                            {it.name}
+                            {isSeller && mine && (
+                              <span className="ml-2 text-[10px] font-bold uppercase tracking-wider text-accent">
+                                yours
+                              </span>
+                            )}
+                          </p>
+                          <p className="text-[11px] text-ink-500">
+                            {it.variant ? `${it.variant} · ` : ''}{it.qty} × {money(it.price)}
+                            {managesEverything && it.sellerName ? ` · ${it.sellerName}` : ''}
+                          </p>
+                        </div>
+                        <span className="shrink-0 text-sm font-semibold text-white">{money(it.price * it.qty)}</span>
+                      </li>
+                    );
+                  })}
                 </ul>
 
                 <dl className="mt-5 space-y-2 border-t border-white/10 pt-4 text-sm">
@@ -373,6 +407,7 @@ const AdminOrders: React.FC = () => {
                   ))}
                 </ol>
 
+                {managesEverything && (
                 <div className="mt-5 flex gap-2">
                   <Input
                     value={note}
@@ -384,6 +419,7 @@ const AdminOrders: React.FC = () => {
                     Add
                   </Button>
                 </div>
+                )}
               </section>
             </div>
           </aside>

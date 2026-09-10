@@ -11,6 +11,8 @@ export interface CartLine {
   variant: string;
   stock: number;
   trackStock: boolean;
+  sellerId: string;
+  sellerName: string;
 }
 
 interface CartState {
@@ -75,6 +77,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
           variant,
           stock: product.stock,
           trackStock: product.trackStock,
+          sellerId: product.sellerId ?? '',
+          sellerName: product.sellerName ?? '',
         },
       ];
     });

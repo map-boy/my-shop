@@ -43,6 +43,42 @@ Storage, Hosting).
 
 ## Access model
 
+The shop is a **marketplace**: one owner, many sellers.
+
+| | Owner (`techubwenge@gmail.com`) | Admin | Seller |
+| --- | --- | --- | --- |
+| Sees every seller's products and data | yes | yes | **no — only their own** |
+| Add / edit / delete products | any | any | own only |
+| Promotions | any | any | own only |
+| Orders | all, and changes status | all | reads orders containing their items |
+| Customers, inbox, subscribers | yes | yes | no |
+| Categories, home page, store settings | yes | yes | no |
+| Payment details (the MoMo pay code) | yes | yes | no |
+| Add or remove sellers | yes | no | no |
+
+A seller fills in their own name, shop name, phone and logo under **My shop**. That shop name is
+stamped onto every product they list and shown to shoppers as "Sold by …".
+
+**All payments go to the platform's MoMo pay code**, never to a seller's own number — payment
+settings are owner-only, and a seller account cannot reach them. The owner sees every order and
+settles with each seller.
+
+This is enforced in `firestore.rules`, not just in the interface. A seller may only create a row
+stamped with their own e-mail address, may only change rows already stamped with it, and cannot
+promote themselves or lift their own suspension. Run the tests:
+
+```bash
+npm run test:rules      # 33 checks against the Firestore emulator
+```
+
+The suite covers the attacks that matter: editing another seller's product, re-stamping someone
+else's listing to steal it, reading another seller's orders, reading the customer list, changing
+the payment settings, and a suspended seller trying to reinstate themselves.
+
+### Sign-in
+
+
+
 * Sign-in is **Google only** — no passwords are ever stored or shared.
 * The bootstrap owner is **`techubwenge@gmail.com`**. On its first sign-in the account is created
   automatically, so the dashboard works against a completely empty database.

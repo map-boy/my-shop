@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, NavLink, Navigate, Outlet, useLocation } from 'react-router-dom';
 import {
   BadgePercent, Boxes, ExternalLink, LayoutDashboard, LayoutTemplate, LogOut, Mail,
-  Menu, Package, Settings as SettingsIcon, ShoppingCart, Tags, Users, UserCog, X,
+  Menu, Package, Settings as SettingsIcon, ShoppingCart, Store, Tags, Users, UserCog, X,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useStore } from '../../context/StoreContext';
@@ -16,11 +16,13 @@ interface NavItem {
   label: string;
   icon: React.ComponentType<{ size?: number; className?: string }>;
   badge?: number;
-  ownerOnly?: boolean;
+  /** Hidden from sellers — platform-wide data or configuration. */
+  platformOnly?: boolean;
+  sellerOnly?: boolean;
 }
 
 const AdminLayout: React.FC = () => {
-  const { isAdmin, isOwner, loading, admin, user, signOut } = useAuth();
+  const { isAdmin, isOwner, isSeller, managesEverything, loading, admin, user, signOut } = useAuth();
   const { settings } = useStore();
   const { orders, messages } = useAdminData();
   const [sidebar, setSidebar] = useState(false);
@@ -40,7 +42,9 @@ const AdminLayout: React.FC = () => {
 
   if (!isAdmin) return <Navigate to="/admin" replace state={{ from: location.pathname }} />;
 
-  const pendingOrders = orders.filter((o) => o.status === 'pending').length;
+  const pendingOrders = managesEverything
+    ? orders.filter((o) => o.status === 'pending').length
+    : 0;
   const unreadMessages = messages.filter((m) => !m.read).length;
 
   const groups: { title: string; items: NavItem[] }[] = [
@@ -49,31 +53,41 @@ const AdminLayout: React.FC = () => {
       items: [{ to: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard }],
     },
     {
-      title: 'Catalogue',
+      title: isSeller ? 'My catalogue' : 'Catalogue',
       items: [
-        { to: '/admin/products', label: 'Products', icon: Package },
-        { to: '/admin/categories', label: 'Categories', icon: Tags },
+        { to: '/admin/products', label: isSeller ? 'My products' : 'Products', icon: Package },
+        { to: '/admin/categories', label: 'Categories', icon: Tags, platformOnly: true },
         { to: '/admin/inventory', label: 'Inventory', icon: Boxes },
       ],
     },
     {
       title: 'Selling',
       items: [
-        { to: '/admin/orders', label: 'Orders', icon: ShoppingCart, badge: pendingOrders },
-        { to: '/admin/customers', label: 'Customers', icon: Users },
-        { to: '/admin/coupons', label: 'Discounts', icon: BadgePercent },
-        { to: '/admin/messages', label: 'Inbox', icon: Mail, badge: unreadMessages },
+        { to: '/admin/orders', label: isSeller ? 'My orders' : 'Orders', icon: ShoppingCart, badge: pendingOrders },
+        { to: '/admin/customers', label: 'Customers', icon: Users, platformOnly: true },
+        { to: '/admin/coupons', label: isSeller ? 'My promotions' : 'Discounts', icon: BadgePercent },
+        { to: '/admin/messages', label: 'Inbox', icon: Mail, badge: unreadMessages, platformOnly: true },
       ],
     },
     {
-      title: 'Storefront',
+      title: isSeller ? 'My account' : 'Storefront',
       items: [
-        { to: '/admin/home-builder', label: 'Home builder', icon: LayoutTemplate },
-        { to: '/admin/settings', label: 'Store settings', icon: SettingsIcon },
-        { to: '/admin/team', label: 'Team & access', icon: UserCog, ownerOnly: false },
+        { to: '/admin/shop-profile', label: 'My shop', icon: Store, sellerOnly: true },
+        { to: '/admin/home-builder', label: 'Home builder', icon: LayoutTemplate, platformOnly: true },
+        { to: '/admin/settings', label: 'Store settings', icon: SettingsIcon, platformOnly: true },
+        { to: '/admin/team', label: 'Sellers & access', icon: UserCog, platformOnly: true },
       ],
     },
   ];
+
+  const visibleGroups = groups
+    .map((g) => ({
+      ...g,
+      items: g.items.filter(
+        (i) => (!i.platformOnly || managesEverything) && (!i.sellerOnly || isSeller),
+      ),
+    }))
+    .filter((g) => g.items.length > 0);
 
   const Sidebar = (
     <div className="flex h-full flex-col">
@@ -99,14 +113,12 @@ const AdminLayout: React.FC = () => {
       </div>
 
       <nav className="thin-scrollbar flex-1 overflow-y-auto px-3 py-5">
-        {groups.map((group) => (
+        {visibleGroups.map((group) => (
           <div key={group.title} className="mb-6">
             <p className="mb-2 px-3 text-[10px] font-bold uppercase tracking-[0.2em] text-ink-600">
               {group.title}
             </p>
-            {group.items
-              .filter((item) => !item.ownerOnly || isOwner)
-              .map((item) => (
+            {group.items.map((item) => (
                 <NavLink
                   key={item.to}
                   to={item.to}
@@ -151,7 +163,9 @@ const AdminLayout: React.FC = () => {
           )}
           <div className="min-w-0 flex-1">
             <p className="truncate text-xs font-bold text-white">{admin?.name || user?.displayName || 'Administrator'}</p>
-            <p className="truncate text-[10px] uppercase tracking-wider text-accent">{admin?.role ?? 'admin'}</p>
+            <p className="truncate text-[10px] uppercase tracking-wider text-accent">
+              {admin?.role === 'seller' ? admin.shopName || 'seller' : admin?.role ?? 'admin'}
+            </p>
           </div>
           <button
             onClick={() => void signOut()}

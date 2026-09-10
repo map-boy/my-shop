@@ -24,10 +24,12 @@ export interface Product {
   compareAtPrice: number;  // 0 = no "was" price
   cost: number;            // internal, never shown to shoppers
   images: string[];
-  sellerId: string;        // e-mail of the admin who owns this product
-  sellerName: string;      // display name, snapshotted for fast listing
   categoryId: string;
   categoryName: string;
+  /** Google account of the seller who owns this listing. '' = the platform's own. */
+  sellerId: string;
+  /** Shop name shown to shoppers, denormalised so listings need no extra read. */
+  sellerName: string;
   tags: string[];
   options: ProductOption[];
   stock: number;
@@ -78,6 +80,9 @@ export interface OrderItem {
   price: number;
   qty: number;
   variant: string;
+  /** Which seller has to fulfil this line. */
+  sellerId: string;
+  sellerName: string;
 }
 
 export interface OrderEvent {
@@ -107,6 +112,12 @@ export interface Order {
   paymentStatus: PaymentStatus;
   status: OrderStatus;
   timeline: OrderEvent[];
+  /**
+   * Every seller with a line in this order. Denormalised because Firestore
+   * cannot filter on the contents of an array of objects — this is what a
+   * seller's `array-contains` query and the security rules both read.
+   */
+  sellerIds: string[];
   createdAt: number;
   updatedAt: number;
 }
@@ -134,6 +145,8 @@ export interface Coupon {
   used: number;
   active: boolean;
   expiresAt: number;    // 0 = never
+  /** Seller who created it. Only they and the owner may edit it. */
+  sellerId: string;
   createdAt: number;
 }
 
@@ -158,7 +171,7 @@ export interface Subscriber {
 /*  Administrators                                                             */
 /* -------------------------------------------------------------------------- */
 
-export type AdminRole = 'owner' | 'admin' | 'staff';
+export type AdminRole = 'owner' | 'admin' | 'seller';
 
 export interface AdminUser {
   id: ID;               // the e-mail address, lower-cased
@@ -170,6 +183,13 @@ export interface AdminUser {
   addedBy: string;
   addedAt: number;
   lastLogin: number;
+
+  /* Seller profile — filled in by the seller themselves. */
+  shopName: string;
+  phone: string;
+  about: string;
+  logoUrl: string;
+  profileComplete: boolean;
 }
 
 export interface ActivityEntry {

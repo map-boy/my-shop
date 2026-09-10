@@ -166,6 +166,8 @@ export async function seedDemoCatalogue(): Promise<{ products: number; categorie
       images: [p.image],
       categoryId: categoryIds.get(p.category) ?? '',
       categoryName: p.category,
+      sellerId: '',
+      sellerName: '',
       tags: [slugify(p.category)],
       options: [],
       stock: p.stock,

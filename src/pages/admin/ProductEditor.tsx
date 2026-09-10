@@ -15,7 +15,8 @@ import { cn, discountPercent, errorMessage, slugify } from '../../lib/utils';
 const BLANK: Omit<Product, 'id'> = {
   name: '', slug: '', sku: '', description: '', shortDescription: '',
   price: 0, compareAtPrice: 0, cost: 0,
-  images: [], categoryId: '', categoryName: '', tags: [], sellerId: '', sellerName: '',
+  images: [], categoryId: '', categoryName: '', tags: [],
+  sellerId: '', sellerName: '',
   options: [], stock: 0, trackStock: true, status: 'active',
   featured: false, bestSeller: false, newArrival: true,
   rating: 0, reviewCount: 0, soldCount: 0, order: 0,
@@ -40,7 +41,7 @@ interface Props {
 
 const ProductEditor: React.FC<Props> = ({ open, product, onClose }) => {
   const { categories, money } = useStore();
-  const { admin } = useAuth();
+  const { admin, isSeller } = useAuth();
   const toast = useToast();
 
   const [form, setForm] = useState<Omit<Product, 'id'>>(BLANK);
@@ -101,11 +102,16 @@ const ProductEditor: React.FC<Props> = ({ open, product, onClose }) => {
 
     const payload: Omit<Product, 'id'> = {
       ...form,
-      sellerId: form.sellerId || admin?.email || '',
-      sellerName: form.sellerName || admin?.name || admin?.email || '',
       name: form.name.trim(),
       slug: (slugTouched && form.slug ? form.slug : slugify(form.name)) || slugify(form.name),
       categoryName: category?.name ?? '',
+      // Ownership is stamped from the signed-in account, never from the form,
+      // and an existing listing keeps the seller it already had. The security
+      // rules reject anything else.
+      sellerId: product?.sellerId || (isSeller ? (admin?.email ?? '') : (form.sellerId ?? '')),
+      sellerName:
+        product?.sellerName ||
+        (isSeller ? (admin?.shopName || admin?.name || admin?.email || '') : (form.sellerName ?? '')),
       status: andPublish ? 'active' : form.status,
       options: form.options.filter((o) => o.name.trim() && o.values.length),
       price: Number(form.price) || 0,

@@ -1,5 +1,5 @@
 // FILE: src/pages/admin/AdminCoupons.tsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { deleteDoc, doc, setDoc } from 'firebase/firestore';
 import { BadgePercent, Plus, Trash2 } from 'lucide-react';
 import { db } from '../../lib/firebase';
@@ -20,7 +20,7 @@ const BLANK = {
 const AdminCoupons: React.FC = () => {
   const { coupons, orders } = useAdminData();
   const { money } = useStore();
-  const { admin } = useAuth();
+  const { admin, isSeller, managesEverything } = useAuth();
   const toast = useToast();
 
   const [open, setOpen] = useState(false);
@@ -46,6 +46,14 @@ const AdminCoupons: React.FC = () => {
     }
   }, [open, editing]);
 
+  const visibleCoupons = useMemo(
+    () =>
+      isSeller && admin?.email
+        ? coupons.filter((c) => (c.sellerId ?? '').toLowerCase() === admin.email.toLowerCase())
+        : coupons,
+    [coupons, isSeller, admin?.email],
+  );
+
   const usageOf = (code: string) =>
     orders.filter((o) => o.couponCode?.toUpperCase() === code.toUpperCase()).length;
 
@@ -66,6 +74,8 @@ const AdminCoupons: React.FC = () => {
           minSubtotal: Number(form.minSubtotal) || 0,
           usageLimit: Number(form.usageLimit) || 0,
           used: editing?.used ?? 0,
+          // Stamped from the signed-in account; the rules reject anything else.
+          sellerId: editing?.sellerId ?? (isSeller ? admin?.email ?? '' : ''),
           active: form.active,
           expiresAt: form.expires ? new Date(`${form.expires}T23:59:59`).getTime() : 0,
           createdAt: editing?.createdAt ?? Date.now(),
@@ -104,14 +114,16 @@ const AdminCoupons: React.FC = () => {
         <div>
           <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-accent">Selling</p>
           <h1 className="mt-2 font-display text-3xl font-bold text-white sm:text-4xl">Discount codes</h1>
-          <p className="mt-2 text-sm text-ink-400">Shoppers enter these at checkout.</p>
+          <p className="mt-2 text-sm text-ink-400">
+            Shoppers enter these at checkout.{isSeller && ' You see and edit only your own codes.'}
+          </p>
         </div>
         <Button variant="accent" size="lg" icon={<Plus size={17} />} onClick={() => { setEditing(null); setOpen(true); }}>
           New code
         </Button>
       </header>
 
-      {coupons.length === 0 ? (
+      {visibleCoupons.length === 0 ? (
         <EmptyState
           icon={<BadgePercent size={40} />}
           title="No discount codes"
@@ -125,7 +137,7 @@ const AdminCoupons: React.FC = () => {
         />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {coupons.map((c) => {
+          {visibleCoupons.map((c) => {
             const expired = c.expiresAt > 0 && c.expiresAt < Date.now();
             const used = usageOf(c.code);
             return (

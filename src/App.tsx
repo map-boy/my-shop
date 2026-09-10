@@ -2,7 +2,7 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { StoreProvider, useStore } from './context/StoreContext';
 import { CartProvider } from './context/CartContext';
 import { ToastProvider } from './context/ToastContext';
@@ -39,6 +39,7 @@ const AdminMessages = React.lazy(() => import('./pages/admin/AdminMessages'));
 const AdminHomeBuilder = React.lazy(() => import('./pages/admin/AdminHomeBuilder'));
 const AdminSettings = React.lazy(() => import('./pages/admin/AdminSettings'));
 const AdminTeam = React.lazy(() => import('./pages/admin/AdminTeam'));
+const ShopProfile = React.lazy(() => import('./pages/admin/ShopProfile'));
 
 const ScrollToTop: React.FC = () => {
   const { pathname } = useLocation();
@@ -49,6 +50,18 @@ const ScrollToTop: React.FC = () => {
     window.scrollTo(0, 0);
   }, [pathname]);
   return null;
+};
+
+/**
+ * Guards the screens that belong to the platform rather than to a seller.
+ * Hiding a link is presentation; this is what stops a seller reaching the page
+ * by typing its address. The security rules refuse the data either way.
+ */
+const PlatformOnly: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { managesEverything, loading } = useAuth();
+  if (loading) return <PageLoader />;
+  if (!managesEverything) return <Navigate to="/admin/dashboard" replace />;
+  return <>{children}</>;
 };
 
 /** Storefront chrome: navigation, cart drawer and footer around every shop page. */
@@ -122,15 +135,16 @@ const App: React.FC = () => (
               >
                 <Route path="/admin/dashboard" element={<Dashboard />} />
                 <Route path="/admin/products" element={<AdminProducts />} />
-                <Route path="/admin/categories" element={<AdminCategories />} />
+                <Route path="/admin/categories" element={<PlatformOnly><AdminCategories /></PlatformOnly>} />
                 <Route path="/admin/inventory" element={<AdminInventory />} />
                 <Route path="/admin/orders" element={<AdminOrders />} />
-                <Route path="/admin/customers" element={<AdminCustomers />} />
+                <Route path="/admin/customers" element={<PlatformOnly><AdminCustomers /></PlatformOnly>} />
                 <Route path="/admin/coupons" element={<AdminCoupons />} />
-                <Route path="/admin/messages" element={<AdminMessages />} />
-                <Route path="/admin/home-builder" element={<AdminHomeBuilder />} />
-                <Route path="/admin/settings" element={<AdminSettings />} />
-                <Route path="/admin/team" element={<AdminTeam />} />
+                <Route path="/admin/messages" element={<PlatformOnly><AdminMessages /></PlatformOnly>} />
+                <Route path="/admin/home-builder" element={<PlatformOnly><AdminHomeBuilder /></PlatformOnly>} />
+                <Route path="/admin/settings" element={<PlatformOnly><AdminSettings /></PlatformOnly>} />
+                <Route path="/admin/team" element={<PlatformOnly><AdminTeam /></PlatformOnly>} />
+                <Route path="/admin/shop-profile" element={<ShopProfile />} />
               </Route>
 
               <Route path="/admin/*" element={<Navigate to="/admin/dashboard" replace />} />

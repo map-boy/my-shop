@@ -1,6 +1,6 @@
 // FILE: src/hooks/useAdminData.tsx
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
+import { collection, onSnapshot, orderBy, query, where } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
 import type { ActivityEntry, AdminUser, Coupon, Customer, Message, Order, Subscriber } from '../lib/types';
@@ -28,7 +28,7 @@ const AdminDataContext = createContext<AdminData>(EMPTY);
  * reads from here, so opening a page never re-queries what is already live.
  */
 export const AdminDataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isAdmin } = useAuth();
+  const { isAdmin, isSeller, admin } = useAuth();
   const [data, setData] = useState<AdminData>(EMPTY);
 
   useEffect(() => {
@@ -51,8 +51,23 @@ export const AdminDataProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         () => patch({ [field]: [] } as Partial<AdminData>),
       );
 
+    // A seller's order feed is filtered in the query itself, not after the
+    // fact — the security rules reject an unfiltered read, so asking for
+    // everything would simply fail.
+    const ordersQuery = isSeller && admin?.email
+      ? query(
+          collection(db, 'orders'),
+          where('sellerIds', 'array-contains', admin.email),
+          orderBy('createdAt', 'desc'),
+        )
+      : query(collection(db, 'orders'), orderBy('createdAt', 'desc'));
+
     const unsubs = [
-      listen<Order>('orders', 'orders'),
+      onSnapshot(
+        ordersQuery,
+        (snap) => patch({ orders: snap.docs.map((d) => ({ id: d.id, ...d.data() })) as Order[] }),
+        () => patch({ orders: [] }),
+      ),
       listen<Customer>('customers', 'customers'),
       listen<Coupon>('coupons', 'coupons'),
       listen<Message>('messages', 'messages'),
@@ -63,7 +78,7 @@ export const AdminDataProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
     patch({ loading: false });
     return () => unsubs.forEach((u) => u());
-  }, [isAdmin]);
+  }, [isAdmin, isSeller, admin?.email]);
 
   const value = useMemo(() => data, [data]);
   return <AdminDataContext.Provider value={value}>{children}</AdminDataContext.Provider>;

@@ -17,8 +17,7 @@ import { cn, errorMessage, PLACEHOLDER_IMAGE, slugify } from '../../lib/utils';
 
 const AdminProducts: React.FC = () => {
   const { products, categories, money } = useStore();
-  const { admin } = useAuth();
-  const visibleProducts = admin?.role === 'owner' ? products : products.filter((p) => p.sellerId === admin?.email);
+  const { admin, isSeller, managesEverything } = useAuth();
   const toast = useToast();
 
   const [search, setSearch] = useState('');
@@ -42,6 +41,16 @@ const AdminProducts: React.FC = () => {
       setSeeding(false);
     }
   };
+
+  // A seller's catalogue is only ever their own rows. The security rules
+  // enforce this too — this is just so the screen shows the truth.
+  const visibleProducts = useMemo(
+    () =>
+      isSeller && admin?.email
+        ? products.filter((p) => (p.sellerId ?? '').toLowerCase() === admin.email.toLowerCase())
+        : products,
+    [products, isSeller, admin?.email],
+  );
 
   const rows = useMemo(() => {
     const needle = search.trim().toLowerCase();
@@ -139,6 +148,7 @@ const AdminProducts: React.FC = () => {
           <h1 className="mt-2 font-display text-3xl font-bold text-white sm:text-4xl">Products</h1>
           <p className="mt-2 text-sm text-ink-400">
             {visibleProducts.length} total · {visibleProducts.filter((p) => p.status === 'active').length} live
+          {isSeller && ' · your listings only'}
           </p>
         </div>
         <Button variant="accent" size="lg" icon={<Plus size={17} />} onClick={openNew}>
@@ -214,7 +224,7 @@ const AdminProducts: React.FC = () => {
           action={
             <div className="flex flex-wrap justify-center gap-3">
               <Button variant="accent" onClick={openNew} icon={<Plus size={16} />}>New product</Button>
-              {visibleProducts.length === 0 && (
+              {visibleProducts.length === 0 && managesEverything && (
                 <Button variant="outline" onClick={() => void seed()} loading={seeding} className="border-white/25 text-white hover:bg-white/10">
                   Load demo catalogue
                 </Button>
@@ -263,7 +273,10 @@ const AdminProducts: React.FC = () => {
                           />
                           <span className="min-w-0">
                             <span className="block max-w-[16rem] truncate font-semibold text-white">{p.name}</span>
-                            <span className="block text-[11px] text-ink-500">{p.sku || '—'}</span>
+                            <span className="block text-[11px] text-ink-500">
+                          {p.sku || '—'}
+                          {managesEverything && p.sellerName ? ` · ${p.sellerName}` : ''}
+                        </span>
                           </span>
                         </button>
                       </td>

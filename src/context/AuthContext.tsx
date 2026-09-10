@@ -18,6 +18,10 @@ interface AuthState {
   role: AdminRole | null;
   isAdmin: boolean;
   isOwner: boolean;
+  /** A seller only ever sees and edits their own listings. */
+  isSeller: boolean;
+  /** Owner or full admin — may touch everything, including other sellers' rows. */
+  managesEverything: boolean;
   /** `true` while the initial auth + admin lookup is still running. */
   loading: boolean;
   /** Set when a signed-in Google account is not on the admin roster. */
@@ -60,6 +64,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             photoURL: u.photoURL ?? '',
             role: 'owner',
             disabled: false,
+            shopName: '',
+            phone: '',
+            about: '',
+            logoUrl: '',
+            profileComplete: false,
             addedBy: 'system',
             addedAt: Date.now(),
             lastLogin: Date.now(),
@@ -137,6 +146,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       role: admin?.role ?? null,
       isAdmin: !!admin,
       isOwner: admin?.role === 'owner' || user?.email?.toLowerCase() === OWNER_EMAIL,
+      isSeller: admin?.role === 'seller',
+      managesEverything: !!admin && admin.role !== 'seller',
       loading,
       denied,
       signInWithGoogle,

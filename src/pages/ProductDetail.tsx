@@ -299,7 +299,14 @@ const ProductDetail: React.FC = () => {
             </li>
           </ul>
 
-          {product.sku && <p className="mt-6 text-[11px] uppercase tracking-widest text-ink-400">SKU · {product.sku}</p>}
+          <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] uppercase tracking-widest text-ink-400">
+            {product.sellerName && (
+              <span>
+                Sold by <strong className="text-ink-700">{product.sellerName}</strong>
+              </span>
+            )}
+            {product.sku && <span>SKU · {product.sku}</span>}
+          </div>
         </div>
       </div>
 

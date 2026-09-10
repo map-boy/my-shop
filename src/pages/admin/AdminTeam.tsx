@@ -4,6 +4,7 @@ import { deleteDoc, doc, setDoc } from 'firebase/firestore';
 import { Crown, Plus, ShieldCheck, ShieldX, Trash2, UserCog } from 'lucide-react';
 import { db, OWNER_EMAIL } from '../../lib/firebase';
 import { useAdminData } from '../../hooks/useAdminData';
+import { useStore } from '../../context/StoreContext';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { logActivity } from '../../lib/activity';
@@ -14,17 +15,18 @@ import { cn, errorMessage, formatDate, timeAgo } from '../../lib/utils';
 const ROLE_COPY: Record<AdminRole, string> = {
   owner: 'Full control, including adding and removing other administrators.',
   admin: 'Can change everything in the shop, but cannot manage the team.',
-  staff: 'Day-to-day work — orders, inbox and stock.',
+  seller: 'Sells on the shop. Sees and edits only their own products, promotions and orders — nothing belonging to another seller.',
 };
 
 const AdminTeam: React.FC = () => {
   const { admins, activity } = useAdminData();
   const { isOwner, admin: me } = useAuth();
+  const { products, money } = useStore();
   const toast = useToast();
 
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState('');
-  const [role, setRole] = useState<AdminRole>('admin');
+  const [role, setRole] = useState<AdminRole>('seller');
   const [busy, setBusy] = useState(false);
   const [confirm, setConfirm] = useState<AdminUser | null>(null);
 
@@ -44,6 +46,11 @@ const AdminTeam: React.FC = () => {
         addedBy: me?.email ?? 'owner',
         addedAt: Date.now(),
         lastLogin: 0,
+        shopName: '',
+        phone: '',
+        about: '',
+        logoUrl: '',
+        profileComplete: false,
       });
       logActivity(me?.email ?? 'owner', 'granted admin access', clean);
       toast.success(`${clean} can now sign in with Google.`);
@@ -96,10 +103,11 @@ const AdminTeam: React.FC = () => {
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-accent">Storefront</p>
-          <h1 className="mt-2 font-display text-3xl font-bold text-white sm:text-4xl">Team & access</h1>
+          <h1 className="mt-2 font-display text-3xl font-bold text-white sm:text-4xl">Sellers & access</h1>
           <p className="mt-2 max-w-2xl text-sm text-ink-400">
-            Anyone listed here can sign in to the dashboard with their Google account. No password is ever set —
-            Google handles the login.
+            Anyone listed here signs in with their Google account — no passwords. A <strong>seller</strong>{' '}
+            sees only their own products, promotions and orders. An <strong>admin</strong> or{' '}
+            <strong>owner</strong> sees everything.
           </p>
         </div>
         {isOwner && (
@@ -158,6 +166,37 @@ const AdminTeam: React.FC = () => {
                   {!a.lastLogin && <Badge tone="amber">pending first login</Badge>}
                 </div>
 
+                {a.role === 'seller' && (
+                  <dl className="mt-4 space-y-1.5 rounded-xl border border-white/10 bg-white/[0.02] p-3 text-[11px] text-ink-500">
+                    <div className="flex justify-between">
+                      <dt>Shop</dt>
+                      <dd className="text-ink-200">{a.shopName || <span className="text-amber-400">not set up yet</span>}</dd>
+                    </div>
+                    <div className="flex justify-between">
+                      <dt>Phone</dt>
+                      <dd className="text-ink-200">{a.phone || '—'}</dd>
+                    </div>
+                    <div className="flex justify-between">
+                      <dt>Listings</dt>
+                      <dd className="text-ink-200">
+                        {products.filter(
+                          (p) => (p.sellerId ?? '').toLowerCase() === a.id.toLowerCase(),
+                        ).length}
+                      </dd>
+                    </div>
+                    <div className="flex justify-between">
+                      <dt>Stock value</dt>
+                      <dd className="text-ink-200">
+                        {money(
+                          products
+                            .filter((p) => (p.sellerId ?? '').toLowerCase() === a.id.toLowerCase())
+                            .reduce((n, p) => n + (p.trackStock ? p.stock * p.price : 0), 0),
+                        )}
+                      </dd>
+                    </div>
+                  </dl>
+                )}
+
                 <dl className="mt-4 space-y-1.5 text-[11px] text-ink-500">
                   <div className="flex justify-between">
                     <dt>Added</dt>
@@ -172,9 +211,9 @@ const AdminTeam: React.FC = () => {
                 {isOwner && !isBootstrapOwner && (
                   <div className="mt-5 space-y-3 border-t border-white/10 pt-4">
                     <Select value={a.role} onChange={(e) => void changeRole(a, e.target.value as AdminRole)}>
-                      <option value="owner">Owner</option>
+                      <option value="seller">Seller</option>
                       <option value="admin">Admin</option>
-                      <option value="staff">Staff</option>
+                      <option value="owner">Owner</option>
                     </Select>
                     <div className="flex gap-2">
                       <Button
@@ -229,7 +268,7 @@ const AdminTeam: React.FC = () => {
       <Modal
         open={open}
         onClose={() => setOpen(false)}
-        title="Add an administrator"
+        title="Add a seller"
         subtitle="They sign in with Google — there is no password to share."
         footer={
           <div className="flex justify-end gap-3">
@@ -256,9 +295,9 @@ const AdminTeam: React.FC = () => {
 
           <Field label="Role">
             <Select value={role} onChange={(e) => setRole(e.target.value as AdminRole)}>
+              <option value="seller">Seller</option>
               <option value="admin">Admin</option>
               <option value="owner">Owner</option>
-              <option value="staff">Staff</option>
             </Select>
           </Field>
 

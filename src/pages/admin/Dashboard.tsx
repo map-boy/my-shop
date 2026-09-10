@@ -3,7 +3,7 @@ import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import {
   AlertTriangle, ArrowUpRight, BadgePercent, Boxes, LayoutTemplate, Mail,
-  Package, ShoppingCart, TrendingUp, UserCog, Users,
+  Package, ShoppingCart, Store, TrendingUp, UserCog, Users,
 } from 'lucide-react';
 import { useAdminData } from '../../hooks/useAdminData';
 import { useStore } from '../../context/StoreContext';
@@ -52,8 +52,34 @@ const StatCard: React.FC<{
 
 const Dashboard: React.FC = () => {
   const { orders, customers, messages, coupons, subscribers } = useAdminData();
-  const { products, categories, money } = useStore();
-  const { admin } = useAuth();
+  const { admin, isSeller, managesEverything } = useAuth();
+  const { products: allProducts, categories, money } = useStore();
+
+  // A seller's dashboard counts only their own listings. Orders are already
+  // filtered by the query in useAdminData.
+  const products = useMemo(
+    () =>
+      isSeller && admin?.email
+        ? allProducts.filter((p) => (p.sellerId ?? '').toLowerCase() === admin.email.toLowerCase())
+        : allProducts,
+    [allProducts, isSeller, admin?.email],
+  );
+
+  // Money a seller can claim is only their own lines, not the whole order.
+  const sellerRevenue = useMemo(() => {
+    if (!isSeller || !admin?.email) return 0;
+    const mine = admin.email.toLowerCase();
+    return orders
+      .filter((o) => REVENUE_STATUSES.includes(o.status))
+      .reduce(
+        (sum, o) =>
+          sum +
+          o.items
+            .filter((i) => (i.sellerId ?? '').toLowerCase() === mine)
+            .reduce((n, i) => n + i.price * i.qty, 0),
+        0,
+      );
+  }, [orders, isSeller, admin?.email]);
 
   const stats = useMemo(() => {
     const revenue = orders
@@ -90,12 +116,19 @@ const Dashboard: React.FC = () => {
 
   const unread = messages.filter((m) => !m.read).length;
 
-  const quickLinks = [
-    { to: '/admin/products', label: 'Add a product', icon: Package },
-    { to: '/admin/home-builder', label: 'Edit the home page', icon: LayoutTemplate },
-    { to: '/admin/coupons', label: 'Create a discount', icon: BadgePercent },
-    { to: '/admin/team', label: 'Invite an admin', icon: UserCog },
-  ];
+  const quickLinks = managesEverything
+    ? [
+        { to: '/admin/products', label: 'Add a product', icon: Package },
+        { to: '/admin/home-builder', label: 'Edit the home page', icon: LayoutTemplate },
+        { to: '/admin/coupons', label: 'Create a discount', icon: BadgePercent },
+        { to: '/admin/team', label: 'Add a seller', icon: UserCog },
+      ]
+    : [
+        { to: '/admin/products', label: 'Add a product', icon: Package },
+        { to: '/admin/coupons', label: 'Create a promotion', icon: BadgePercent },
+        { to: '/admin/orders', label: 'See my orders', icon: ShoppingCart },
+        { to: '/admin/shop-profile', label: 'Edit my shop details', icon: Store },
+      ];
 
   return (
     <div className="space-y-8">
@@ -105,16 +138,22 @@ const Dashboard: React.FC = () => {
           Welcome back{admin?.name ? `, ${admin.name.split(' ')[0]}` : ''}
         </h1>
         <p className="mt-2 text-sm text-ink-400">
-          Everything on the storefront is editable from here — nothing needs a developer.
+          {isSeller
+            ? 'Your products, your promotions, your orders. Nothing here is shared with other sellers.'
+            : 'Everything on the storefront is editable from here — nothing needs a developer.'}
         </p>
       </header>
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
-          label="Revenue (confirmed)"
-          value={money(stats.revenue)}
-          hint={`${money(stats.recentRevenue)} in the last 30 days`}
+          label={isSeller ? 'Your sales (confirmed)' : 'Revenue (confirmed)'}
+          value={money(isSeller ? sellerRevenue : stats.revenue)}
+          hint={
+            isSeller
+              ? 'Your items only — the shop owner settles with you'
+              : `${money(stats.recentRevenue)} in the last 30 days`
+          }
           icon={TrendingUp}
           tone="accent"
         />
@@ -126,25 +165,48 @@ const Dashboard: React.FC = () => {
           to="/admin/orders"
         />
         <StatCard
-          label="Products"
+          label={isSeller ? 'Your products' : 'Products'}
           value={String(products.length)}
-          hint={`${categories.length} categories`}
+          hint={isSeller ? 'Listed by you' : `${categories.length} categories`}
           icon={Package}
           to="/admin/products"
         />
-        <StatCard
-          label="Customers"
-          value={String(customers.length)}
-          hint={`${subscribers.length} newsletter subscribers`}
-          icon={Users}
-          to="/admin/customers"
-        />
+        {managesEverything ? (
+          <StatCard
+            label="Customers"
+            value={String(customers.length)}
+            hint={`${subscribers.length} newsletter subscribers`}
+            icon={Users}
+            to="/admin/customers"
+          />
+        ) : (
+          <StatCard
+            label="Items sold"
+            value={String(
+              orders
+                .filter((o) => REVENUE_STATUSES.includes(o.status))
+                .reduce(
+                  (n, o) =>
+                    n +
+                    o.items
+                      .filter(
+                        (i) =>
+                          (i.sellerId ?? '').toLowerCase() === (admin?.email ?? '').toLowerCase(),
+                      )
+                      .reduce((m, i) => m + i.qty, 0),
+                  0,
+                ),
+            )}
+            hint="Across all confirmed orders"
+            icon={Package}
+          />
+        )}
       </div>
 
       {/* Alerts */}
       {(stats.outOfStock.length > 0 || stats.lowStock.length > 0 || unread > 0 || stats.pending > 0) && (
         <div className="grid gap-3 sm:grid-cols-2">
-          {stats.pending > 0 && (
+          {stats.pending > 0 && managesEverything && (
             <Link
               to="/admin/orders"
               className="flex items-center gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-100 transition hover:border-amber-500/60"
@@ -155,7 +217,7 @@ const Dashboard: React.FC = () => {
               </span>
             </Link>
           )}
-          {unread > 0 && (
+          {unread > 0 && managesEverything && (
             <Link
               to="/admin/messages"
               className="flex items-center gap-3 rounded-xl border border-blue-500/30 bg-blue-500/10 p-4 text-sm text-blue-100 transition hover:border-blue-500/60"

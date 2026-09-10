@@ -114,7 +114,14 @@ const Checkout: React.FC = () => {
         price: l.price,
         qty: l.qty,
         variant: l.variant,
+        sellerId: l.sellerId ?? '',
+        sellerName: l.sellerName ?? '',
       })),
+      // Flat list of sellers in this order. A seller's dashboard query and the
+      // security rules both read this, so it has to be written at checkout.
+      sellerIds: Array.from(
+        new Set(lines.map((l) => (l.sellerId ?? '').toLowerCase()).filter(Boolean)),
+      ),
       subtotal,
       shipping,
       tax,
