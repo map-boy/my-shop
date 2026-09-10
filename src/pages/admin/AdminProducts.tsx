@@ -18,6 +18,7 @@ import { cn, errorMessage, PLACEHOLDER_IMAGE, slugify } from '../../lib/utils';
 const AdminProducts: React.FC = () => {
   const { products, categories, money } = useStore();
   const { admin } = useAuth();
+  const visibleProducts = admin?.role === 'owner' ? products : products.filter((p) => p.sellerId === admin?.email);
   const toast = useToast();
 
   const [search, setSearch] = useState('');
@@ -44,7 +45,7 @@ const AdminProducts: React.FC = () => {
 
   const rows = useMemo(() => {
     const needle = search.trim().toLowerCase();
-    return products.filter((p) => {
+    return visibleProducts.filter((p) => {
       if (status && p.status !== status) return false;
       if (category && p.categoryId !== category) return false;
       if (!needle) return true;
@@ -55,7 +56,7 @@ const AdminProducts: React.FC = () => {
         p.tags?.some((t) => t.includes(needle))
       );
     });
-  }, [products, search, status, category]);
+  }, [visibleProducts, search, status, category]);
 
   const allChecked = rows.length > 0 && selected.length === rows.length;
 
@@ -137,7 +138,7 @@ const AdminProducts: React.FC = () => {
           <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-accent">Catalogue</p>
           <h1 className="mt-2 font-display text-3xl font-bold text-white sm:text-4xl">Products</h1>
           <p className="mt-2 text-sm text-ink-400">
-            {products.length} total · {products.filter((p) => p.status === 'active').length} live
+            {visibleProducts.length} total · {visibleProducts.filter((p) => p.status === 'active').length} live
           </p>
         </div>
         <Button variant="accent" size="lg" icon={<Plus size={17} />} onClick={openNew}>
@@ -204,16 +205,16 @@ const AdminProducts: React.FC = () => {
       {rows.length === 0 ? (
         <EmptyState
           icon={<Package size={40} />}
-          title={products.length ? 'Nothing matches those filters' : 'No products yet'}
+          title={visibleProducts.length ? 'Nothing matches those filters' : 'No products yet'}
           text={
-            products.length
+            visibleProducts.length
               ? 'Try a different search term or clear the filters.'
               : 'Add your first product — it appears on the storefront the moment you save.'
           }
           action={
             <div className="flex flex-wrap justify-center gap-3">
               <Button variant="accent" onClick={openNew} icon={<Plus size={16} />}>New product</Button>
-              {products.length === 0 && (
+              {visibleProducts.length === 0 && (
                 <Button variant="outline" onClick={() => void seed()} loading={seeding} className="border-white/25 text-white hover:bg-white/10">
                   Load demo catalogue
                 </Button>

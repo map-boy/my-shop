@@ -24,6 +24,8 @@ export interface Product {
   compareAtPrice: number;  // 0 = no "was" price
   cost: number;            // internal, never shown to shoppers
   images: string[];
+  sellerId: string;        // e-mail of the admin who owns this product
+  sellerName: string;      // display name, snapshotted for fast listing
   categoryId: string;
   categoryName: string;
   tags: string[];

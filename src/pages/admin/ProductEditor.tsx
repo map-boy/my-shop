@@ -15,7 +15,7 @@ import { cn, discountPercent, errorMessage, slugify } from '../../lib/utils';
 const BLANK: Omit<Product, 'id'> = {
   name: '', slug: '', sku: '', description: '', shortDescription: '',
   price: 0, compareAtPrice: 0, cost: 0,
-  images: [], categoryId: '', categoryName: '', tags: [],
+  images: [], categoryId: '', categoryName: '', tags: [], sellerId: '', sellerName: '',
   options: [], stock: 0, trackStock: true, status: 'active',
   featured: false, bestSeller: false, newArrival: true,
   rating: 0, reviewCount: 0, soldCount: 0, order: 0,
@@ -101,6 +101,8 @@ const ProductEditor: React.FC<Props> = ({ open, product, onClose }) => {
 
     const payload: Omit<Product, 'id'> = {
       ...form,
+      sellerId: form.sellerId || admin?.email || '',
+      sellerName: form.sellerName || admin?.name || admin?.email || '',
       name: form.name.trim(),
       slug: (slugTouched && form.slug ? form.slug : slugify(form.name)) || slugify(form.name),
       categoryName: category?.name ?? '',

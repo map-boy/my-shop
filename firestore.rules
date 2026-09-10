@@ -62,7 +62,17 @@ service cloud.firestore {
     }
 
     // --- Catalog ------------------------------------------------------------
-    match /products/{id}   { allow read: if true; allow write: if isAdmin(); }
+    // Products are seller-scoped: the owner may write any product; any other
+    // admin ("seller") may only create/update/delete products whose
+    // sellerId matches their own e-mail.
+    function ownsProduct() {
+      return resource.data.sellerId == email();
+    }
+    match /products/{id} {
+      allow read: if true;
+      allow create: if isOwner() || (isAdmin() && request.resource.data.sellerId == email());
+      allow update, delete: if isOwner() || (isAdmin() && ownsProduct());
+    }
     match /categories/{id} { allow read: if true; allow write: if isAdmin(); }
     match /collections/{id}{ allow read: if true; allow write: if isAdmin(); }
     match /coupons/{id}    { allow read: if true; allow write: if isAdmin(); }

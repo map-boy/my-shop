@@ -89,7 +89,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setDenied(null);
       void setDoc(
         refDoc,
-        { lastLogin: Date.now(), name: u.displayName ?? data.name, photoURL: u.photoURL ?? data.photoURL },
+        { lastLogin: Date.now(), name: data.name || u.displayName || '', photoURL: u.photoURL ?? data.photoURL },
         { merge: true },
       );
     } catch {
