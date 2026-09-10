@@ -30,6 +30,17 @@ jobs:
       - name: Type-check
         run: npm run lint
 
+      - name: Check Firebase configuration
+        env:
+          VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
+        run: |
+          if [ -z "$VITE_FIREBASE_API_KEY" ]; then
+            echo "::warning::VITE_FIREBASE_API_KEY is not set in the 'production' environment." \
+                 "The build will fall back to the values committed in src/lib/firebase.ts."
+          else
+            echo "Firebase configuration supplied by the production environment."
+          fi
+
       - name: Build
         env:
           VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}

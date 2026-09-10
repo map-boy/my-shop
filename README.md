@@ -119,6 +119,30 @@ Create it under **Settings → Environments → New environment → `production`
 
 ---
 
+## Troubleshooting
+
+**`Uncaught FirebaseError: Firebase: Error (auth/invalid-api-key)`**
+
+The build was handed a *blank* `VITE_FIREBASE_API_KEY`. This happens when a CI job references a
+secret that has not been created yet — GitHub substitutes an empty string, not nothing at all.
+
+The app now treats a blank value as "not set" and falls back to the committed project config, so
+this should no longer break the site. If you still see it, the key itself is wrong: check
+**Firebase console → Project settings → General → Your apps → SDK setup and configuration**, and
+make sure the value starts with `AIza`.
+
+**`Uncaught (in promise) Error: Could not establish connection` / `localhost/getjson.php`**
+
+Not your site — that is a browser extension talking to itself. Confirm by opening the shop in an
+incognito window with extensions disabled.
+
+**`auth/unauthorized-domain` when signing in**
+
+Add the domain you are serving from under **Firebase console → Authentication → Settings →
+Authorised domains**.
+
+---
+
 ## Data model
 
 | Collection | Purpose | Who can read | Who can write |
