@@ -1,5 +1,8 @@
 /// <reference types="vite/client" />
 
+/** Commit and timestamp of the build currently running. Injected by Vite. */
+declare const __BUILD_ID__: string;
+
 interface ImportMetaEnv {
   readonly VITE_FIREBASE_API_KEY?: string;
   readonly VITE_FIREBASE_AUTH_DOMAIN?: string;

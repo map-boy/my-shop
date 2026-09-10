@@ -131,6 +131,22 @@ this should no longer break the site. If you still see it, the key itself is wro
 **Firebase console → Project settings → General → Your apps → SDK setup and configuration**, and
 make sure the value starts with `AIza`.
 
+**Still seeing `auth/invalid-api-key` after a fix?** You are almost certainly looking at an old
+bundle. Check which build is live before debugging anything else:
+
+```js
+// in the browser console, on the deployed site
+window.myShopBuild        // → "7ffe625 · 2026-09-10 09:21Z"
+```
+
+The same string is printed to the console on load and shown in small type at the bottom of
+`/admin`. If the commit does not match what you deployed, the site was not rebuilt — or the browser
+is holding a cached `index.html`. Force a clean reload with **Ctrl/Cmd + Shift + R**, or open the
+site in a private window.
+
+Asset filenames are content-hashed (`index-Dba53Z7g.js`), so identical filenames across two page
+loads means identical code. Different code can never produce the same filename.
+
 **`Uncaught (in promise) Error: Could not establish connection` / `localhost/getjson.php`**
 
 Not your site — that is a browser extension talking to itself. Confirm by opening the shop in an

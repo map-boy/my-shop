@@ -8,6 +8,13 @@ if (!container) throw new Error('Root element #root is missing from index.html')
 
 const root: Root = createRoot(container);
 
+// Which build is actually running. Read it in the console, or from
+// `window.myShopBuild`, to confirm a deploy really went out.
+(window as unknown as { myShopBuild: string }).myShopBuild = __BUILD_ID__;
+console.info(`%c my-shop %c build ${__BUILD_ID__} `,
+  'background:#111827;color:#e0b34d;font-weight:700;border-radius:3px 0 0 3px',
+  'background:#efeeec;color:#171614;border-radius:0 3px 3px 0');
+
 /**
  * Anything that blows up while the app is still starting — a bad Firebase
  * config being the usual suspect — would otherwise leave a blank white page
@@ -51,6 +58,7 @@ function renderFatal(error: unknown) {
       >
         {message}
       </pre>
+      <p style={{ fontSize: '0.7rem', color: '#a5a19a', margin: 0 }}>build {__BUILD_ID__}</p>
       <button
         onClick={() => window.location.reload()}
         style={{
