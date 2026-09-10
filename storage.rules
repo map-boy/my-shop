@@ -1,0 +1,32 @@
+rules_version = '2';
+
+// ---------------------------------------------------------------------------
+// my-shop — Cloud Storage security rules
+// Product imagery is public; only administrators can upload or delete.
+// ---------------------------------------------------------------------------
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function ownerEmail() {
+      return 'techubwenge@gmail.com';
+    }
+
+    function signedIn() {
+      return request.auth != null && request.auth.token.email != null;
+    }
+
+    function isAdmin() {
+      return signedIn() && (
+        request.auth.token.email.lower() == ownerEmail() ||
+        firestore.exists(/databases/(default)/documents/admins/$(request.auth.token.email.lower()))
+      );
+    }
+
+    match /{allPaths=**} {
+      allow read: if true;
+      allow write: if isAdmin()
+                   && request.resource.size < 15 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*|video/.*');
+    }
+  }
+}
