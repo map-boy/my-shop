@@ -11,7 +11,7 @@ export const DEFAULT_SETTINGS: StoreSettings = {
   tagline: 'Everything you love, delivered.',
   logoUrl: '',
   currency: 'RWF',
-  currencySymbol: 'RWF',
+  currencySymbol: 'FRW',
   currencyPosition: 'before',
   locale: 'en-RW',
 
@@ -23,7 +23,7 @@ export const DEFAULT_SETTINGS: StoreSettings = {
 
   announcement: {
     enabled: true,
-    text: 'Free delivery on orders over 50,000 RWF · Same-day dispatch in Kigali',
+    text: 'We deliver free on every order over 5,000 FRW · Pay with MoMo or cash on delivery',
     link: '/shop',
     bg: '#111827',
     color: '#ffffff',
@@ -108,40 +108,21 @@ export const DEFAULT_SETTINGS: StoreSettings = {
   valuePropsSection: {
     enabled: true,
     items: [
-      { icon: 'truck', title: 'Fast delivery', text: 'Same-day in Kigali, 48h countrywide.' },
-      { icon: 'shield', title: 'Secure checkout', text: 'Pay on delivery or by mobile money.' },
+      { icon: 'truck', title: 'Free over 5,000 FRW', text: 'Every order above 5,000 FRW ships free.' },
+      { icon: 'shield', title: 'Pay your way', text: 'MoMo Pay 1105179, or cash on delivery.' },
       { icon: 'refresh', title: '7-day returns', text: 'Changed your mind? Send it back.' },
       { icon: 'headphones', title: 'Real people', text: 'We answer on WhatsApp in minutes.' },
     ],
   },
 
   testimonialsSection: {
-    enabled: true,
+    // Deliberately empty: shipping invented reviews would present made-up
+    // people as real customers. Add genuine quotes from Dashboard → Home
+    // builder, and the section turns itself on.
+    enabled: false,
     title: 'Loved by our customers',
     subtitle: 'A few words from people who shop with us.',
-    items: [
-      {
-        name: 'Aline U.',
-        role: 'Kigali',
-        avatar: '',
-        quote: 'Ordered at noon, it was at my door by five. The quality was better than the photos.',
-        rating: 5,
-      },
-      {
-        name: 'Eric M.',
-        role: 'Musanze',
-        avatar: '',
-        quote: 'Clear prices, no surprises at checkout, and they actually pick up the phone.',
-        rating: 5,
-      },
-      {
-        name: 'Divine K.',
-        role: 'Huye',
-        avatar: '',
-        quote: 'I have ordered four times now. Nothing has ever arrived late or damaged.',
-        rating: 5,
-      },
-    ],
+    items: [],
   },
 
   newsletterSection: {
@@ -166,9 +147,9 @@ export const DEFAULT_SETTINGS: StoreSettings = {
 
   shipping: {
     enabled: true,
-    flatRate: 2000,
-    freeOver: 50000,
-    note: 'Delivery fee is confirmed with you before dispatch.',
+    flatRate: 1000,
+    freeOver: 5000,
+    note: 'Orders over 5,000 FRW are delivered free. Below that a small delivery fee applies, and we confirm it with you on the phone before dispatch.',
   },
   tax: { enabled: false, rate: 18, label: 'VAT' },
   payments: {
@@ -177,15 +158,18 @@ export const DEFAULT_SETTINGS: StoreSettings = {
     card: false,
     bank: false,
     instructions:
-      'Mobile Money: send to *182*8*1*XXXXXX# and paste the transaction ID in the notes field.',
+      'MTN Mobile Money — dial *182*8*1*1105179# or use MoMo Pay code 1105179, then send us the transaction ID. ' +
+      'We confirm your order as soon as the payment lands.',
   },
   checkout: { requirePhone: true, allowNotes: true, minOrder: 0 },
 
   contact: {
-    phone: '+250 788 000 000',
-    whatsapp: '+250788000000',
-    email: 'hello@myshop.rw',
-    address: 'KG 11 Ave, Kigali, Rwanda',
+    phone: '+250 780 867 473',
+    whatsapp: '250780867473',
+    // Left blank on purpose — an address or e-mail you do not actually monitor
+    // is worse than none. Fill these in from Dashboard → Store settings.
+    email: '',
+    address: '',
     hours: 'Mon – Sat, 08:00 – 19:00',
     mapUrl: '',
   },
@@ -221,7 +205,7 @@ export const DEFAULT_SETTINGS: StoreSettings = {
       },
     ],
     copyright: `© ${new Date().getFullYear()} My Shop. All rights reserved.`,
-    paymentNote: 'We accept Mobile Money, cash on delivery and bank transfer.',
+    paymentNote: 'We accept MTN Mobile Money (Pay code 1105179) and cash on delivery.',
   },
 
   seo: {

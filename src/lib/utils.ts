@@ -72,7 +72,14 @@ export function errorMessage(err: unknown): string {
     'auth/popup-closed-by-user': 'Sign-in was cancelled.',
     'auth/popup-blocked': 'Your browser blocked the pop-up. Allow pop-ups and try again.',
     'auth/network-request-failed': 'Network problem — check your connection and retry.',
-    'auth/unauthorized-domain': 'This domain is not authorised in Firebase Auth settings.',
+    'auth/unauthorized-domain':
+      'This domain is not authorised. Add it in Firebase console → Authentication → Settings → Authorised domains.',
+    'auth/operation-not-allowed':
+      'Google sign-in is switched off for this Firebase project. Turn it on in Firebase console → Authentication → Sign-in method → Google.',
+    'auth/configuration-not-found':
+      'Firebase Authentication has not been set up yet. Open Firebase console → Authentication → Get started, then enable Google sign-in.',
+    'auth/cancelled-popup-request': 'Another sign-in window was already open.',
+    'auth/internal-error': 'Firebase rejected the sign-in. Check that Google sign-in is enabled and the domain is authorised.',
     'storage/unauthorized': 'Only administrators can upload files.',
   };
   if (map[code]) return map[code];

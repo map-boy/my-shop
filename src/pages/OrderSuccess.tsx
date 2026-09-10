@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import { doc, getDoc } from 'firebase/firestore';
-import { CheckCircle2, Copy, Printer } from 'lucide-react';
+import { CheckCircle2, Copy, Printer, Smartphone } from 'lucide-react';
 import { db } from '../lib/firebase';
 import { useStore } from '../context/StoreContext';
 import { useToast } from '../context/ToastContext';
@@ -43,6 +43,28 @@ const OrderSuccess: React.FC = () => {
           Your order has been received. We will call or e-mail you shortly to confirm the delivery.
         </p>
       </div>
+
+      {/* How to pay — shown while the order is still unpaid and the customer
+          chose a method that needs an action from them. */}
+      {(!order || order.paymentStatus !== 'paid') &&
+        settings.payments.instructions &&
+        (!order || /momo|mobile money/i.test(order.paymentMethod)) && (
+          <div className="mt-10 rounded-brand border-2 border-accent bg-accent/5 p-6 sm:p-8">
+            <h2 className="flex items-center gap-2.5 font-display text-xl font-bold">
+              <Smartphone size={20} className="text-accent" />
+              Now complete your payment
+            </h2>
+            <p className="mt-4 whitespace-pre-line text-[15px] leading-relaxed text-ink-700">
+              {settings.payments.instructions}
+            </p>
+            {order && (
+              <p className="mt-4 text-sm text-ink-600">
+                Amount to send: <strong className="text-ink-900">{money(order.total)}</strong> · Reference:{' '}
+                <strong className="text-ink-900">{order.number}</strong>
+              </p>
+            )}
+          </div>
+        )}
 
       <div className="mt-10 rounded-brand border border-ink-200 p-6 sm:p-8">
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-ink-200 pb-5">
