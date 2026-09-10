@@ -11,6 +11,7 @@ import { AdminDataProvider } from './hooks/useAdminData';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import CartDrawer from './components/CartDrawer';
+import ErrorBoundary from './components/ErrorBoundary';
 
 import Home from './pages/Home';
 import Shop from './pages/Shop';
@@ -41,7 +42,12 @@ const AdminTeam = React.lazy(() => import('./pages/admin/AdminTeam'));
 
 const ScrollToTop: React.FC = () => {
   const { pathname } = useLocation();
-  useEffect(() => window.scrollTo(0, 0), [pathname]);
+  useEffect(() => {
+    // Braces matter: the arrow shorthand would hand React whatever
+    // window.scrollTo returns, and React would then call it as a clean-up
+    // function. Browser extensions patch scrollTo and some return a value.
+    window.scrollTo(0, 0);
+  }, [pathname]);
   return null;
 };
 
@@ -88,6 +94,7 @@ const App: React.FC = () => (
         <StoreProvider>
           <CartProvider>
             <ScrollToTop />
+            <ErrorBoundary>
             <React.Suspense fallback={<PageLoader />}>
             <Routes>
               {/* Storefront */}
@@ -129,6 +136,7 @@ const App: React.FC = () => (
               <Route path="/admin/*" element={<Navigate to="/admin/dashboard" replace />} />
             </Routes>
             </React.Suspense>
+            </ErrorBoundary>
           </CartProvider>
         </StoreProvider>
       </AuthProvider>

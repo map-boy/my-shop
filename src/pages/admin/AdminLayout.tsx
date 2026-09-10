@@ -26,7 +26,9 @@ const AdminLayout: React.FC = () => {
   const [sidebar, setSidebar] = useState(false);
   const location = useLocation();
 
-  useEffect(() => setSidebar(false), [location.pathname]);
+  useEffect(() => {
+    setSidebar(false);
+  }, [location.pathname]);
 
   if (loading) {
     return (
