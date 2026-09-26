@@ -104,7 +104,7 @@ const ProductDetail: React.FC = () => {
     const variant = product.options
       ?.map((o) => (choices[o.name] ? `${o.name}: ${choices[o.name]}` : ''))
       .filter(Boolean)
-      .join(' ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· ');
+      .join(' - ');
     add(product, qty, variant ?? '');
   };
 
@@ -155,7 +155,7 @@ const ProductDetail: React.FC = () => {
       {hiddenFromShoppers && (
         <div className="mb-8 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
           <strong>Only you can see this.</strong> This product is {product.status}, so it does not appear
-          in the shop. Publish it from Dashboard ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ Products to make it public.
+          in the shop. Publish it from Dashboard &gt; Products to make it public.
         </div>
       )}
 
@@ -213,7 +213,7 @@ const ProductDetail: React.FC = () => {
                 ))}
               </div>
               <span className="text-xs text-ink-500">
-                {product.rating.toFixed(1)} ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· {product.reviewCount} reviews
+                {product.rating.toFixed(1)} - {product.reviewCount} reviews
               </span>
             </div>
           )}
@@ -301,7 +301,7 @@ const ProductDetail: React.FC = () => {
             className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-ink-200 py-3 text-sm font-semibold text-ink-700 transition hover:border-ink-900 hover:text-ink-900 disabled:opacity-50"
           >
             <Share2 size={16} />
-            {sharing ? 'Preparing imageÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¦' : 'Share to Status'}
+            {sharing ? 'Preparing link...' : 'Share to Status'}
           </button>
 
           <ul className="mt-9 grid gap-4 border-t border-ink-200 pt-8 sm:grid-cols-3">
@@ -325,7 +325,7 @@ const ProductDetail: React.FC = () => {
                 Sold by <strong className="text-ink-700">{product.sellerName}</strong>
               </span>
             )}
-            {product.sku && <span>SKU ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· {product.sku}</span>}
+            {product.sku && <span>SKU - {product.sku}</span>}
           </div>
         </div>
       </div>
