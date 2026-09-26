@@ -101,8 +101,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         { lastLogin: Date.now(), name: data.name || u.displayName || '', photoURL: u.photoURL ?? data.photoURL },
         { merge: true },
       );
-    } catch {
-      // Rules deny reading somebody else's admin doc â€” treat as "not an admin".
+    } catch (err) {
+      // Rules deny reading somebody else's admin doc — treat as "not an admin".
+      console.error('[my-shop] resolveAdmin failed:', err);
       setAdmin(null);
       setDenied(email);
     }

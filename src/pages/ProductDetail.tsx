@@ -2,7 +2,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
-  ChevronRight, Minus, Plus, RefreshCw, ShieldCheck, ShoppingBag, Star, Truck,
+  ChevronRight, Minus, Plus, RefreshCw, Share2, ShieldCheck, ShoppingBag, Star, Truck,
 } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -14,6 +14,7 @@ import ProductCard from '../components/ProductCard';
 import { Badge, Button, PageLoader, SectionHeading } from '../components/ui';
 import type { Product } from '../lib/types';
 import { cn, discountPercent, PLACEHOLDER_IMAGE } from '../lib/utils';
+import { shareProductToStatus } from '../lib/shareImage';
 
 const ProductDetail: React.FC = () => {
   const { slug = '' } = useParams();
@@ -27,9 +28,8 @@ const ProductDetail: React.FC = () => {
   const [qty, setQty] = useState(1);
   const [choices, setChoices] = useState<Record<string, string>>({});
   const [tab, setTab] = useState<'description' | 'delivery'>('description');
+  const [sharing, setSharing] = useState(false);
 
-  // Look through the whole catalogue, not just the live products, so an
-  // administrator can open a draft to preview it. Visibility is decided below.
   const fromCatalogue = useMemo(() => {
     const key = slug.trim().toLowerCase();
     return (
@@ -39,9 +39,6 @@ const ProductDetail: React.FC = () => {
     );
   }, [products, slug]);
 
-  // A direct link or a refresh can arrive before the catalogue listener has
-  // delivered anything. Rather than showing "not found", fetch the one
-  // document by id and let the listener take over when it catches up.
   const [fetched, setFetched] = useState<Product | null>(null);
   const [lookupDone, setLookupDone] = useState(false);
 
@@ -69,7 +66,6 @@ const ProductDetail: React.FC = () => {
   }, [slug, fromCatalogue, loading]);
 
   const found = fromCatalogue ?? fetched;
-  // Shoppers only ever see active products; admins can preview anything.
   const product = found && (found.status === 'active' || isAdmin) ? found : undefined;
   const hiddenFromShoppers = !!found && found.status !== 'active';
 
@@ -121,6 +117,22 @@ const ProductDetail: React.FC = () => {
     }
   };
 
+  const shareToStatus = async () => {
+    setSharing(true);
+    try {
+      const result = await shareProductToStatus(product, money);
+      if (result === 'downloaded') {
+        toast.success('Image saved — attach it to your WhatsApp status.');
+      }
+    } catch (err) {
+      if ((err as Error)?.name !== 'AbortError') {
+        toast.error('Could not share this product. Please try again.');
+      }
+    } finally {
+      setSharing(false);
+    }
+  };
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12">
       <nav className="mb-8 flex items-center gap-1.5 text-xs text-ink-500">
@@ -145,7 +157,6 @@ const ProductDetail: React.FC = () => {
       )}
 
       <div className="grid gap-10 lg:grid-cols-2 lg:gap-16">
-        {/* Gallery */}
         <div>
           <div className="relative aspect-square overflow-hidden rounded-brand bg-ink-100">
             <img
@@ -179,7 +190,6 @@ const ProductDetail: React.FC = () => {
           )}
         </div>
 
-        {/* Buy box */}
         <div>
           {product.categoryName && (
             <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-accent">
@@ -221,7 +231,6 @@ const ProductDetail: React.FC = () => {
             <p className="mt-6 text-[15px] leading-relaxed text-ink-600">{product.shortDescription}</p>
           )}
 
-          {/* Options */}
           {product.options?.filter((o) => o.values.length).map((opt) => (
             <div key={opt.name} className="mt-7">
               <p className="label">{opt.name}</p>
@@ -244,7 +253,6 @@ const ProductDetail: React.FC = () => {
             </div>
           ))}
 
-          {/* Quantity + actions */}
           <div className="mt-9 flex flex-wrap items-center gap-3">
             <div className="flex items-center rounded-xl border border-ink-200">
               <button
@@ -283,7 +291,16 @@ const ProductDetail: React.FC = () => {
             </Button>
           )}
 
-          {/* Reassurance */}
+          <button
+            type="button"
+            onClick={shareToStatus}
+            disabled={sharing}
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-ink-200 py-3 text-sm font-semibold text-ink-700 transition hover:border-ink-900 hover:text-ink-900 disabled:opacity-50"
+          >
+            <Share2 size={16} />
+            {sharing ? 'Preparing image…' : 'Share to Status'}
+          </button>
+
           <ul className="mt-9 grid gap-4 border-t border-ink-200 pt-8 sm:grid-cols-3">
             <li className="flex items-start gap-3 text-xs text-ink-600">
               <Truck size={17} className="mt-0.5 shrink-0 text-accent" />
@@ -310,7 +327,6 @@ const ProductDetail: React.FC = () => {
         </div>
       </div>
 
-      {/* Details tabs */}
       <div className="mt-16 border-t border-ink-200 pt-10">
         <div className="flex gap-6 border-b border-ink-200">
           {(['description', 'delivery'] as const).map((t) => (
