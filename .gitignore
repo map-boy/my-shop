@@ -11,3 +11,5 @@ dist-ssr
 .idea
 .firebase
 firebase-debug.log
+.vercel
+.env*

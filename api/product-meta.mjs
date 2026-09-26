@@ -77,10 +77,8 @@ export default async function handler(req, res) {
   const name = product.name || "Product";
   const price = typeof product.price === "number" ? product.price : 0;
   const priceLabel = `${CURRENCY_SYMBOL} ${Math.round(price).toLocaleString("en-RW")}`;
-  const image = Array.isArray(product.images) && product.images[0] ? product.images[0] : "";
+  const image = Array.isArray(product.images) && product.images[0] ? product.images[0] : `${SITE_ORIGIN}/favicon.svg`;
   const description = product.shortDescription || product.description || "Shop this on My Shop.";
-
-  const ogImageUrl = `${SITE_ORIGIN}/api/og?` + new URLSearchParams({ name, price: priceLabel, image }).toString();
 
   const html = `<!doctype html>
 <html lang="en">
@@ -90,9 +88,7 @@ export default async function handler(req, res) {
 <meta property="og:type" content="product" />
 <meta property="og:title" content="${escapeHtml(name)} — ${escapeHtml(priceLabel)}" />
 <meta property="og:description" content="${escapeHtml(description)}" />
-<meta property="og:image" content="${escapeHtml(ogImageUrl)}" />
-<meta property="og:image:width" content="1080" />
-<meta property="og:image:height" content="1080" />
+<meta property="og:image" content="${escapeHtml(image)}" />
 <meta property="og:url" content="${escapeHtml(pageUrl)}" />
 <meta name="twitter:card" content="summary_large_image" />
 <meta http-equiv="refresh" content="0; url=${escapeHtml(pageUrl)}" />
