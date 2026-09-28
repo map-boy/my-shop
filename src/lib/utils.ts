@@ -102,3 +102,9 @@ export const PLACEHOLDER_IMAGE =
   encodeURIComponent(
     `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="600"><rect width="600" height="600" fill="#f1f0ee"/><path d="M180 380l90-110 70 85 55-60 95 125z" fill="#d8d5d0"/><circle cx="240" cy="215" r="38" fill="#d8d5d0"/></svg>`,
   );
+
+export function currencyLabel(sym: string): string {
+  const l = typeof document !== 'undefined' ? document.documentElement.lang : 'en';
+  if (/^(FRW|RWF)$/i.test(sym)) { if (l === 'ar') return '\u0641\u0631\u0646\u0643'; if (l === 'fr') return 'RWF'; }
+  return sym;
+}

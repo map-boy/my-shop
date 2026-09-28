@@ -78,14 +78,14 @@ const ProductDetail: React.FC = () => {
     [liveProducts, product],
   );
 
-  if (loading || !lookupDone) return <PageLoader label="Loading product" />;
+  if (loading || !lookupDone) return <PageLoader label={tr('pd.loading')} />;
 
   if (!product) {
     return (
       <div className="mx-auto max-w-xl px-4 py-32 text-center">
-        <h1 className="font-display text-3xl font-bold">Product not found</h1>
-        <p className="mt-3 text-sm text-ink-500">It may have been removed or is no longer available.</p>
-        <Button className="mt-8" onClick={() => navigate('/shop')}>Back to the shop</Button>
+        <h1 className="font-display text-3xl font-bold">{tr('pd.notFound')}</h1>
+        <p className="mt-3 text-sm text-ink-500">{tr('pd.notFoundText')}</p>
+        <Button className="mt-8" onClick={() => navigate('/shop')}>{tr('pd.backShop')}</Button>
       </div>
     );
   }
@@ -127,11 +127,11 @@ const ProductDetail: React.FC = () => {
         await navigator.share({ title: product.name, text: shareText, url: shareUrl });
       } else {
         await navigator.clipboard.writeText(shareUrl);
-        toast.success('Link copied - paste it into your WhatsApp status.');
+        toast.success(tr('pd.linkCopied'));
       }
     } catch (err) {
       if ((err as Error)?.name !== 'AbortError') {
-        toast.error('Could not share this product. Please try again.');
+        toast.error(tr('pd.shareFail'));
       }
     } finally {
       setSharing(false);
@@ -153,9 +153,9 @@ const ProductDetail: React.FC = () => {
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12">
       <nav className="mb-8 flex items-center gap-1.5 text-xs text-ink-500">
-        <Link to="/" className="hover:text-ink-900">Home</Link>
+        <Link to="/" className="hover:text-ink-900">{tr('nav.home')}</Link>
         <ChevronRight size={13} />
-        <Link to="/shop" className="hover:text-ink-900">Shop</Link>
+        <Link to="/shop" className="hover:text-ink-900">{tr('nav.shop')}</Link>
         {product.categoryName && (
           <>
             <ChevronRight size={13} />
@@ -208,7 +208,7 @@ const ProductDetail: React.FC = () => {
                 ))}
               </div>
               <span className="text-xs text-ink-500">
-                {product.rating.toFixed(1)} - {product.reviewCount} reviews
+                {tr('pd.reviews', { rating: product.rating.toFixed(1), n: product.reviewCount })}
               </span>
             </div>
           )}
@@ -231,7 +231,7 @@ const ProductDetail: React.FC = () => {
 
           {product.options?.filter((o) => o.values.length).map((opt) => (
             <div key={opt.name} className="mt-7">
-              <p className="label">{opt.name}</p>
+              <p className="label">{tx(opt.name)}</p>
               <div className="flex flex-wrap gap-2">
                 {opt.values.map((v) => (
                   <button
@@ -244,7 +244,7 @@ const ProductDetail: React.FC = () => {
                         : 'border-ink-200 text-ink-700 hover:border-ink-900',
                     )}
                   >
-                    {v}
+                    {tx(v)}
                   </button>
                 ))}
               </div>
@@ -363,10 +363,10 @@ const ProductDetail: React.FC = () => {
           <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] uppercase tracking-widest text-ink-400">
             {product.sellerName && (
               <span>
-                Sold by <strong className="text-ink-700">{product.sellerName}</strong>
+                {tr('pd.soldBy')} <strong className="text-ink-700">{product.sellerName}</strong>
               </span>
             )}
-            {product.sku && <span>SKU - {product.sku}</span>}
+            {product.sku && <span>{tr('pd.sku')} - {product.sku}</span>}
           </div>
         </div>
       </div>
@@ -389,16 +389,16 @@ const ProductDetail: React.FC = () => {
 
         <div className="max-w-3xl py-8 text-[15px] leading-relaxed text-ink-600">
           {tab === 'description' ? (
-            <p className="whitespace-pre-line">{tx(product.description || 'No description has been added yet.')}</p>
+            <p className="whitespace-pre-line">{product.description ? tx(product.description) : tr('pd.noDesc')}</p>
           ) : (
             <div className="space-y-4">
               <p>{tx(settings.shipping.note)}</p>
               <p>
                 {settings.shipping.freeOver > 0
-                  ? `Orders over ${money(settings.shipping.freeOver)} ship free. Below that a flat fee of ${money(settings.shipping.flatRate)} applies.`
-                  : `A flat delivery fee of ${money(settings.shipping.flatRate)} applies.`}
+                  ? tr('pd.deliveryFree', { amount: money(settings.shipping.freeOver), fee: money(settings.shipping.flatRate) })
+                  : tr('pd.deliveryFlat', { fee: money(settings.shipping.flatRate) })}
               </p>
-              <p>Not right for you? Return it within 7 days in its original condition.</p>
+              <p>{tr('pd.returnNote')}</p>
             </div>
           )}
         </div>
@@ -406,7 +406,7 @@ const ProductDetail: React.FC = () => {
 
       {related.length > 0 && (
         <div className="mt-16">
-          <SectionHeading eyebrow="You may also like" title="Pairs well with this" />
+          <SectionHeading eyebrow={tr('pd.also')} title={tr('pd.pairs')} />
           <div className="grid grid-cols-2 gap-x-5 gap-y-10 lg:grid-cols-4">
             {related.map((p) => <ProductCard key={p.id} product={p} />)}
           </div>

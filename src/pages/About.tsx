@@ -1,3 +1,4 @@
+import { useI18n } from '../lib/i18n';
 // FILE: src/pages/About.tsx
 import React from 'react';
 import { Link } from 'react-router-dom';
@@ -8,12 +9,13 @@ import { PLACEHOLDER_IMAGE } from '../lib/utils';
 
 const About: React.FC = () => {
   const { settings, liveProducts, categories } = useStore();
+  const { t, tx } = useI18n();
 
   const stats = [
-    { value: `${liveProducts.length}+`, label: 'Products on the shelf' },
-    { value: `${categories.length}`, label: 'Categories' },
-    { value: '48h', label: 'Countrywide delivery' },
-    { value: '7 days', label: 'Easy returns' },
+    { value: `${liveProducts.length}+`, label: t('about.s1') },
+    { value: `${categories.length}`, label: t('about.s2') },
+    { value: t('about.h48'), label: t('about.s3') },
+    { value: t('about.d7'), label: t('about.s4') },
   ];
 
   return (
@@ -25,27 +27,20 @@ const About: React.FC = () => {
           className="absolute inset-0 h-full w-full object-cover opacity-45"
         />
         <div className="relative mx-auto w-full max-w-7xl px-4 sm:px-6">
-          <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.3em] text-accent">About us</p>
+          <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.3em] text-accent">{t('about.eyebrow')}</p>
           <h1 className="max-w-2xl font-display text-4xl font-bold text-white sm:text-6xl">
-            {settings.tagline}
+            {tx(settings.tagline)}
           </h1>
         </div>
       </section>
 
       <section className="mx-auto max-w-4xl px-4 py-16 sm:px-6 sm:py-24">
         <p className="font-display text-2xl leading-relaxed text-ink-800 sm:text-3xl">
-          {settings.footer.about}
+          {tx(settings.footer.about)}
         </p>
         <div className="mt-10 space-y-5 text-[15px] leading-relaxed text-ink-600">
-          <p>
-            {settings.storeName} started with a simple frustration: too much choice, too little care. So we
-            keep the catalogue small and the standards high. Every product on this site is one we would buy
-            ourselves.
-          </p>
-          <p>
-            We answer messages quickly, we tell you the truth about stock and delivery times, and if something
-            is not right we make it right. That is the whole business model.
-          </p>
+          <p>{t('about.p1', { store: settings.storeName })}</p>
+          <p>{t('about.p2')}</p>
         </div>
 
         <div className="mt-14 grid grid-cols-2 gap-px overflow-hidden rounded-brand bg-ink-200 sm:grid-cols-4">
@@ -59,10 +54,10 @@ const About: React.FC = () => {
 
         <div className="mt-14 flex flex-wrap gap-3">
           <Link to="/shop">
-            <Button size="lg" icon={<ArrowRight size={17} />}>Browse the shop</Button>
+            <Button size="lg" icon={<ArrowRight size={17} />}>{t('about.browse')}</Button>
           </Link>
           <Link to="/contact">
-            <Button size="lg" variant="outline">Talk to us</Button>
+            <Button size="lg" variant="outline">{t('about.talk')}</Button>
           </Link>
         </div>
       </section>

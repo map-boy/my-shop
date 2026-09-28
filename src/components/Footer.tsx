@@ -150,7 +150,7 @@ const Footer: React.FC = () => {
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
             <span>{tx(settings.footer.paymentNote)}</span>
             <Link to="/admin" className="inline-flex items-center gap-1.5 transition hover:text-accent">
-              <Lock size={12} /> Admin
+              <Lock size={12} /> {t('footer.admin')}
             </Link>
           </div>
         </div>

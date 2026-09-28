@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { EXTRA } from './i18n-extra';
+import { MORE } from './i18n-more';
 import { useStore } from '../context/StoreContext';
 
 export type Lang = 'en' | 'fr' | 'ar' | 'rw';
@@ -58,10 +59,10 @@ const rw: Dict = {
 };
 
 export const DICT: Record<Lang, Dict> = {
-  en: { ...en, ...EXTRA.en },
-  fr: { ...fr, ...EXTRA.fr },
-  ar: { ...ar, ...EXTRA.ar },
-  rw: { ...rw, ...EXTRA.rw },
+  en: { ...en, ...EXTRA.en, ...MORE.en },
+  fr: { ...fr, ...EXTRA.fr, ...MORE.fr },
+  ar: { ...ar, ...EXTRA.ar, ...MORE.ar },
+  rw: { ...rw, ...EXTRA.rw, ...MORE.rw },
 };
 
 /** Firestore-safe key for an interface string (no dots). */

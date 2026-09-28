@@ -4,7 +4,7 @@ import { collection, doc, onSnapshot, orderBy, query } from 'firebase/firestore'
 import { db } from '../lib/firebase';
 import { DEFAULT_SETTINGS, mergeSettings } from '../lib/defaults';
 import type { Category, Product, StoreSettings } from '../lib/types';
-import { contrastOn, formatMoney } from '../lib/utils';
+import { contrastOn, currencyLabel, formatMoney } from '../lib/utils';
 
 interface StoreState {
   settings: StoreSettings;
@@ -91,7 +91,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       error,
       money: (amount: number) =>
         formatMoney(amount, {
-          symbol: settings.currencySymbol || settings.currency,
+          symbol: currencyLabel(settings.currencySymbol || settings.currency),
           position: settings.currencyPosition,
           locale: settings.locale,
         }),

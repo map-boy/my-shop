@@ -1,3 +1,4 @@
+import { useI18n } from '../lib/i18n';
 // FILE: src/components/DeliveryBanner.tsx
 import React from 'react';
 import { Link } from 'react-router-dom';
@@ -12,6 +13,7 @@ import { useStore } from '../context/StoreContext';
 const DeliveryBanner: React.FC = () => {
   const { settings, money } = useStore();
   const { banner, freeOver, enabled } = settings.shipping;
+  const { tx } = useI18n();
 
   if (!banner?.enabled || !banner.text.trim()) return null;
 
@@ -19,7 +21,7 @@ const DeliveryBanner: React.FC = () => {
   // free delivery" message would be nonsense.
   if (!enabled || freeOver <= 0) return null;
 
-  const text = banner.text.replace(/\{amount\}/gi, money(freeOver));
+  const text = tx(banner.text).replace(/\{amount\}/gi, money(freeOver));
 
   return (
     <div style={{ background: banner.bg, color: banner.color }}>

@@ -1,3 +1,4 @@
+import { useI18n } from '../lib/i18n';
 // FILE: src/components/HomeSections.tsx
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -25,6 +26,7 @@ const Container: React.FC<{ children: React.ReactNode; className?: string }> = (
 export const Hero: React.FC = () => {
   const { settings } = useStore();
   const { slides, autoplay, interval } = settings.hero;
+  const { tx } = useI18n();
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
@@ -57,22 +59,22 @@ export const Hero: React.FC = () => {
           {slide.eyebrow && (
             <p className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/25 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.24em] backdrop-blur-sm">
               <Sparkles size={13} className="text-accent" />
-              {slide.eyebrow}
+              {tx(slide.eyebrow)}
             </p>
           )}
           <h1 className="font-display text-4xl font-bold leading-[1.05] sm:text-6xl lg:text-7xl">
-            {slide.title}
+            {tx(slide.title)}
           </h1>
           {slide.subtitle && (
             <p className="mt-6 max-w-xl text-base leading-relaxed text-white/80 sm:text-lg">
-              {slide.subtitle}
+              {tx(slide.subtitle)}
             </p>
           )}
           <div className="mt-10 flex flex-wrap gap-3">
             {slide.ctaText && (
               <Link to={slide.ctaLink || '/shop'}>
                 <Button size="lg" variant="accent" icon={<ArrowRight size={17} />}>
-                  {slide.ctaText}
+                  {tx(slide.ctaText)}
                 </Button>
               </Link>
             )}
@@ -83,7 +85,7 @@ export const Hero: React.FC = () => {
                   variant="outline"
                   className="border-white/40 text-white hover:border-white hover:bg-white/10"
                 >
-                  {slide.ctaSecondaryText}
+                  {tx(slide.ctaSecondaryText)}
                 </Button>
               </Link>
             )}
@@ -143,6 +145,7 @@ const VALUE_ICONS: Record<string, React.ComponentType<{ size?: number; className
 export const ValueProps: React.FC = () => {
   const { settings } = useStore();
   const items = settings.valuePropsSection.items;
+  const { tx } = useI18n();
   if (!items.length) return null;
 
   return (
@@ -156,8 +159,8 @@ export const ValueProps: React.FC = () => {
                 <Icon size={19} />
               </span>
               <div className="min-w-0">
-                <p className="text-sm font-bold text-ink-900">{v.title}</p>
-                <p className="mt-1 text-xs leading-relaxed text-ink-500">{v.text}</p>
+                <p className="text-sm font-bold text-ink-900">{tx(v.title)}</p>
+                <p className="mt-1 text-xs leading-relaxed text-ink-500">{tx(v.text)}</p>
               </div>
             </div>
           );
@@ -174,6 +177,7 @@ export const ValueProps: React.FC = () => {
 export const CategoryGrid: React.FC = () => {
   const { settings, categories, liveProducts } = useStore();
   const cfg = settings.categoriesSection;
+  const { t, tx } = useI18n();
   const list = categories.filter((c) => c.featured).length
     ? categories.filter((c) => c.featured)
     : categories;
@@ -184,12 +188,12 @@ export const CategoryGrid: React.FC = () => {
     <section className="py-20 sm:py-24">
       <Container>
         <SectionHeading
-          eyebrow="Browse"
-          title={cfg.title}
-          subtitle={cfg.subtitle}
+          eyebrow={tx('Browse')}
+          title={tx(cfg.title)}
+          subtitle={tx(cfg.subtitle)}
           action={
             <Link to="/categories" className="group inline-flex items-center gap-2 text-[12px] font-bold uppercase tracking-[0.15em] text-ink-600 hover:text-accent">
-              All categories
+              {t('common.allCategories')}
               <ArrowRight size={15} className="transition-transform group-hover:translate-x-1" />
             </Link>
           }
@@ -212,9 +216,9 @@ export const CategoryGrid: React.FC = () => {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
                 <div className="absolute inset-x-0 bottom-0 p-5">
-                  <h3 className="font-display text-lg font-bold text-white sm:text-xl">{c.name}</h3>
+                  <h3 className="font-display text-lg font-bold text-white sm:text-xl">{tx(c.name)}</h3>
                   <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.15em] text-white/60">
-                    {count} {count === 1 ? 'item' : 'items'}
+                    {count === 1 ? t('count.item1') : t('count.items', { n: count })}
                   </p>
                 </div>
               </Link>
@@ -239,6 +243,7 @@ export const ProductRail: React.FC<{
   viewAllHref?: string;
   tone?: 'light' | 'muted';
 }> = ({ eyebrow, title, subtitle, products, loading, viewAllHref = '/shop', tone = 'light' }) => {
+  const { t } = useI18n();
   if (!loading && !products.length) return null;
 
   return (
@@ -250,7 +255,7 @@ export const ProductRail: React.FC<{
           subtitle={subtitle}
           action={
             <Link to={viewAllHref} className="group inline-flex items-center gap-2 text-[12px] font-bold uppercase tracking-[0.15em] text-ink-600 hover:text-accent">
-              View all
+              {t('common.viewAll')}
               <ArrowRight size={15} className="transition-transform group-hover:translate-x-1" />
             </Link>
           }
@@ -273,6 +278,7 @@ export const ProductRail: React.FC<{
 export const Promo: React.FC<{ which: 'promoA' | 'promoB' }> = ({ which }) => {
   const { settings } = useStore();
   const p = settings[which];
+  const { tx } = useI18n();
   if (!p.enabled) return null;
   const flip = which === 'promoB';
 
@@ -295,14 +301,14 @@ export const Promo: React.FC<{ which: 'promoA' | 'promoB' }> = ({ which }) => {
           </div>
           <div className="px-7 pb-10 lg:px-14 lg:py-16 [direction:ltr]">
             {p.eyebrow && (
-              <p className="mb-4 text-[11px] font-bold uppercase tracking-[0.3em] text-accent">{p.eyebrow}</p>
+              <p className="mb-4 text-[11px] font-bold uppercase tracking-[0.3em] text-accent">{tx(p.eyebrow)}</p>
             )}
-            <h2 className="font-display text-3xl font-bold leading-tight text-white sm:text-4xl">{p.title}</h2>
-            {p.text && <p className="mt-5 max-w-md text-[15px] leading-relaxed text-ink-300">{p.text}</p>}
+            <h2 className="font-display text-3xl font-bold leading-tight text-white sm:text-4xl">{tx(p.title)}</h2>
+            {p.text && <p className="mt-5 max-w-md text-[15px] leading-relaxed text-ink-300">{tx(p.text)}</p>}
             {p.ctaText && (
               <Link to={p.ctaLink || '/shop'} className="mt-8 inline-block">
                 <Button variant="accent" size="lg" icon={<ArrowRight size={17} />}>
-                  {p.ctaText}
+                  {tx(p.ctaText)}
                 </Button>
               </Link>
             )}
@@ -320,17 +326,18 @@ export const Promo: React.FC<{ which: 'promoA' | 'promoB' }> = ({ which }) => {
 export const Testimonials: React.FC = () => {
   const { settings } = useStore();
   const cfg = settings.testimonialsSection;
+  const { tx } = useI18n();
   if (!cfg.items.length) return null;
 
   return (
     <section className="bg-ink-50 py-20 sm:py-24">
       <Container>
-        <SectionHeading eyebrow="Reviews" title={cfg.title} subtitle={cfg.subtitle} align="center" />
+        <SectionHeading eyebrow={tx('Reviews')} title={tx(cfg.title)} subtitle={tx(cfg.subtitle)} align="center" />
         <div className="grid gap-5 md:grid-cols-3">
           {cfg.items.map((t, i) => (
             <figure key={i} className="flex flex-col rounded-brand bg-white p-8 shadow-sm">
               <Quote size={26} className="mb-5 text-accent" />
-              <blockquote className="flex-1 text-[15px] leading-relaxed text-ink-700">“{t.quote}”</blockquote>
+              <blockquote className="flex-1 text-[15px] leading-relaxed text-ink-700">“{tx(t.quote)}”</blockquote>
               <div className="mt-6 flex items-center gap-1">
                 {[1, 2, 3, 4, 5].map((n) => (
                   <Star
@@ -349,8 +356,8 @@ export const Testimonials: React.FC = () => {
                   </span>
                 )}
                 <span>
-                  <span className="block text-sm font-bold text-ink-900">{t.name}</span>
-                  <span className="block text-xs text-ink-500">{t.role}</span>
+                  <span className="block text-sm font-bold text-ink-900">{tx(t.name)}</span>
+                  <span className="block text-xs text-ink-500">{tx(t.role)}</span>
                 </span>
               </figcaption>
             </figure>
@@ -371,17 +378,18 @@ export const Newsletter: React.FC = () => {
   const [email, setEmail] = useState('');
   const [busy, setBusy] = useState(false);
   const cfg = settings.newsletterSection;
+  const { t, tx } = useI18n();
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.includes('@')) return toast.error('Enter a valid e-mail address.');
+    if (!email.includes('@')) return toast.error(t('footer.invalid'));
     setBusy(true);
     try {
       await addDoc(collection(db, 'subscribers'), { email: email.toLowerCase(), createdAt: Date.now() });
       setEmail('');
-      toast.success('Subscribed — welcome aboard!');
+      toast.success(t('footer.subscribed'));
     } catch {
-      toast.error('Could not subscribe right now.');
+      toast.error(t('footer.fail'));
     } finally {
       setBusy(false);
     }
@@ -391,8 +399,8 @@ export const Newsletter: React.FC = () => {
     <section className="py-20 sm:py-24">
       <Container>
         <div className="rounded-brand bg-brand px-6 py-16 text-center sm:px-16">
-          <h2 className="font-display text-3xl font-bold sm:text-4xl">{cfg.title}</h2>
-          <p className="mx-auto mt-4 max-w-lg text-[15px] leading-relaxed opacity-75">{cfg.subtitle}</p>
+          <h2 className="font-display text-3xl font-bold sm:text-4xl">{tx(cfg.title)}</h2>
+          <p className="mx-auto mt-4 max-w-lg text-[15px] leading-relaxed opacity-75">{tx(cfg.subtitle)}</p>
           <form onSubmit={submit} className="mx-auto mt-9 flex max-w-md flex-col gap-3 sm:flex-row">
             <input
               type="email"
@@ -402,7 +410,7 @@ export const Newsletter: React.FC = () => {
               className="h-14 min-w-0 flex-1 rounded-xl border border-white/20 bg-white/10 px-5 text-sm text-current outline-none placeholder:opacity-50 focus:border-white/60"
             />
             <Button type="submit" variant="accent" size="lg" loading={busy} className="shrink-0">
-              {cfg.buttonText}
+              {tx(cfg.buttonText)}
             </Button>
           </form>
         </div>
