@@ -24,6 +24,8 @@ export interface Product {
   compareAtPrice: number;  // 0 = no "was" price
   cost: number;            // internal, never shown to shoppers
   images: string[];
+  /** Optional product video (direct MP4/WebM URL). */
+  videoUrl?: string;
   categoryId: string;
   categoryName: string;
   /** Google account of the seller who owns this listing. '' = the platform's own. */

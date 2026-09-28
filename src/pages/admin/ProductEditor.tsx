@@ -8,6 +8,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { logActivity } from '../../lib/activity';
 import ImageInput from '../../components/ImageInput';
+import VideoInput from '../../components/VideoInput';
 import { Button, Field, Input, Modal, Select, Textarea, Toggle } from '../../components/ui';
 import type { Product, ProductOption } from '../../lib/types';
 import { cn, discountPercent, errorMessage, slugify } from '../../lib/utils';
@@ -15,7 +16,7 @@ import { cn, discountPercent, errorMessage, slugify } from '../../lib/utils';
 const BLANK: Omit<Product, 'id'> = {
   name: '', slug: '', sku: '', description: '', shortDescription: '',
   price: 0, compareAtPrice: 0, cost: 0,
-  images: [], categoryId: '', categoryName: '', tags: [],
+  images: [], videoUrl: '', categoryId: '', categoryName: '', tags: [],
   sellerId: '', sellerName: '',
   options: [], stock: 0, trackStock: true, status: 'active',
   featured: false, bestSeller: false, newArrival: true,
@@ -27,7 +28,7 @@ type Tab = 'basics' | 'media' | 'pricing' | 'options' | 'visibility';
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'basics', label: 'Basics' },
-  { id: 'media', label: 'Images' },
+  { id: 'media', label: 'Images & video' },
   { id: 'pricing', label: 'Price & stock' },
   { id: 'options', label: 'Variants' },
   { id: 'visibility', label: 'Visibility' },
@@ -270,6 +271,13 @@ const ProductEditor: React.FC<Props> = ({ open, product, onClose }) => {
             folder="products"
             label="Product gallery"
             hint="The first image is the one shoppers see in listings. Drag to reorder."
+          />
+          <VideoInput
+            value={form.videoUrl ?? ''}
+            onChange={(url) => set('videoUrl', url)}
+            folder="products/video"
+            label="Product video"
+            hint="Optional. MP4 or WebM up to 15 MB. It appears as the last item in the product gallery."
           />
           {form.images.length === 0 && (
             <p className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-xs text-amber-800">

@@ -11,6 +11,7 @@ import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { useToast } from '../context/ToastContext';
 import ProductCard from '../components/ProductCard';
+import ProductGallery from '../components/ProductGallery';
 import { Badge, Button, PageLoader, SectionHeading } from '../components/ui';
 import type { Product } from '../lib/types';
 import { cn, discountPercent, PLACEHOLDER_IMAGE } from '../lib/utils';
@@ -23,7 +24,6 @@ const ProductDetail: React.FC = () => {
   const toast = useToast();
   const navigate = useNavigate();
 
-  const [imageIndex, setImageIndex] = useState(0);
   const [qty, setQty] = useState(1);
   const [choices, setChoices] = useState<Record<string, string>>({});
   const [tab, setTab] = useState<'description' | 'delivery'>('description');
@@ -160,38 +160,19 @@ const ProductDetail: React.FC = () => {
       )}
 
       <div className="grid gap-10 lg:grid-cols-2 lg:gap-16">
-        <div>
-          <div className="relative aspect-square overflow-hidden rounded-brand bg-ink-100">
-            <img
-              src={images[Math.min(imageIndex, images.length - 1)]}
-              alt={product.name}
-              className="h-full w-full object-cover"
-              onError={(e) => ((e.target as HTMLImageElement).src = PLACEHOLDER_IMAGE)}
-            />
-            {off > 0 && (
-              <span className="absolute left-4 top-4 rounded-full bg-red-600 px-3 py-1.5 text-[11px] font-black uppercase tracking-wider text-white">
+        <ProductGallery
+          key={product.id}
+          images={images}
+          videoUrl={product.videoUrl}
+          alt={product.name}
+          badge={
+            off > 0 ? (
+              <span className="rounded-full bg-red-600 px-3 py-1.5 text-[11px] font-black uppercase tracking-wider text-white">
                 Save {off}%
               </span>
-            )}
-          </div>
-
-          {images.length > 1 && (
-            <div className="no-scrollbar mt-4 flex gap-3 overflow-x-auto">
-              {images.map((src, i) => (
-                <button
-                  key={i}
-                  onClick={() => setImageIndex(i)}
-                  className={cn(
-                    'h-20 w-20 shrink-0 overflow-hidden rounded-xl border-2 transition',
-                    i === imageIndex ? 'border-ink-900' : 'border-transparent opacity-60 hover:opacity-100',
-                  )}
-                >
-                  <img src={src} alt="" className="h-full w-full object-cover" />
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+            ) : null
+          }
+        />
 
         <div>
           {product.categoryName && (
