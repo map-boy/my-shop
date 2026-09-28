@@ -10,6 +10,7 @@ import { useToast } from '../context/ToastContext';
 import { Button, PageLoader } from '../components/ui';
 import type { Order } from '../lib/types';
 import { formatDate } from '../lib/utils';
+import { L10n } from '../lib/i18n';
 
 const OrderSuccess: React.FC = () => {
   const { id = '' } = useParams();
@@ -57,7 +58,7 @@ const OrderSuccess: React.FC = () => {
               {t('x.completePay')}
             </h2>
             <p className="mt-4 whitespace-pre-line text-[15px] leading-relaxed text-ink-700">
-              {settings.payments.instructions}
+              {L10n(settings.payments.instructions)}
             </p>
             {order && (
               <p className="mt-4 text-sm text-ink-600">
@@ -100,7 +101,7 @@ const OrderSuccess: React.FC = () => {
               {order.items.map((it, i) => (
                 <li key={i} className="flex items-center justify-between gap-4 py-4">
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold">{it.name}</p>
+                    <p className="truncate text-sm font-semibold">{L10n(it.name)}</p>
                     <p className="mt-0.5 text-xs text-ink-500">
                       {it.variant ? `${it.variant} · ` : ''}{t('x.qty')} {it.qty}
                     </p>
@@ -128,7 +129,7 @@ const OrderSuccess: React.FC = () => {
               <div>
                 <p className="label">{t('x.deliverTo')}</p>
                 <p className="font-semibold">{order.customerName}</p>
-                <p className="text-ink-600">{order.address}{order.city ? `, ${order.city}` : ''}</p>
+                <p className="text-ink-600">{L10n(order.address)}{order.city ? `, ${order.city}` : ''}</p>
                 <p className="text-ink-600">{order.customerPhone}</p>
               </div>
               <div>

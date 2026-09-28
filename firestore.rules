@@ -98,6 +98,7 @@ service cloud.firestore {
 
     match /categories/{id} { allow read: if true; allow write: if managesEverything(); }
     match /collections/{id}{ allow read: if true; allow write: if managesEverything(); }
+    match /sections/{id}   { allow read: if true; allow write: if managesEverything(); }
 
     match /coupons/{id} {
       allow read: if true;

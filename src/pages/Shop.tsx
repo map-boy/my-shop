@@ -7,15 +7,16 @@ import ProductCard, { ProductCardSkeleton } from '../components/ProductCard';
 import { Button, EmptyState, Select } from '../components/ui';
 import { cn } from '../lib/utils';
 import { useI18n } from '../lib/i18n';
+import { L10n } from '../lib/i18n';
 
 type Sort = 'newest' | 'popular' | 'price-asc' | 'price-desc' | 'name';
 
 const SORTS: { value: Sort; label: string }[] = [
-  { value: 'newest', label: 'Newest first' },
-  { value: 'popular', label: 'Most popular' },
-  { value: 'price-asc', label: 'Price: low to high' },
-  { value: 'price-desc', label: 'Price: high to low' },
-  { value: 'name', label: 'Name A–Z' },
+  { value: 'newest', get label() { return L10n("Newest first"); } },
+  { value: 'popular', get label() { return L10n("Most popular"); } },
+  { value: 'price-asc', get label() { return L10n("Price: low to high"); } },
+  { value: 'price-desc', get label() { return L10n("Price: high to low"); } },
+  { value: 'name', get label() { return L10n("Name A–Z"); } },
 ];
 
 const SORT_KEYS: Record<string, string> = {
@@ -225,13 +226,13 @@ const Shop: React.FC = () => {
           <div className="animate-slide-in absolute right-0 top-0 h-full w-[85%] max-w-sm overflow-y-auto bg-white">
             <div className="sticky top-0 flex items-center justify-between border-b border-ink-200 bg-white px-5 py-4">
               <span className="font-display text-lg font-bold">{t('shop.filters')}</span>
-              <button onClick={() => setFiltersOpen(false)} className="rounded-lg p-2 hover:bg-ink-100" aria-label="Close filters">
+              <button onClick={() => setFiltersOpen(false)} className="rounded-lg p-2 hover:bg-ink-100" aria-label={L10n("Close filters")}>
                 <X size={19} />
               </button>
             </div>
             <div className="p-5">{Filters}</div>
             <div className="sticky bottom-0 border-t border-ink-200 bg-white p-5">
-              <Button full onClick={() => setFiltersOpen(false)}>Show {results.length} results</Button>
+              <Button full onClick={() => setFiltersOpen(false)}>{L10n("Show")} {results.length} {L10n("results")}</Button>
             </div>
           </div>
         </div>

@@ -16,6 +16,7 @@ import { Badge, Button, PageLoader, SectionHeading } from '../components/ui';
 import type { Product } from '../lib/types';
 import { cn, discountPercent, PLACEHOLDER_IMAGE } from '../lib/utils';
 import { useI18n } from '../lib/i18n';
+import { L10n } from '../lib/i18n';
 
 const ProductDetail: React.FC = () => {
   const { slug = '' } = useParams();
@@ -100,7 +101,7 @@ const ProductDetail: React.FC = () => {
   const addToCart = () => {
     if (soldOut) return;
     if (missingChoice) {
-      toast.error(`Please choose a ${missingChoice.name.toLowerCase()}.`);
+      toast.error(tr('chooseOption'));
       return;
     }
     const variant = product.options
@@ -168,8 +169,7 @@ const ProductDetail: React.FC = () => {
 
       {hiddenFromShoppers && (
         <div className="mb-8 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
-          <strong>Only you can see this.</strong> This product is {product.status}, so it does not appear
-          in the shop. Publish it from Dashboard &gt; Products to make it public.
+          <strong>{tr('pd.hiddenTitle')}</strong> {tr('pd.hiddenText', { status: product.status })}
         </div>
       )}
 
@@ -258,7 +258,7 @@ const ProductDetail: React.FC = () => {
                   <button
                     onClick={() => setQty((n) => Math.max(1, n - 1))}
                     className="flex h-12 w-12 items-center justify-center transition hover:bg-ink-100"
-                    aria-label="Decrease quantity"
+                    aria-label={L10n("Decrease quantity")}
                   >
                     <Minus size={15} />
                   </button>
@@ -266,7 +266,7 @@ const ProductDetail: React.FC = () => {
                   <button
                     onClick={() => setQty((n) => (product.trackStock ? Math.min(product.stock, n + 1) : n + 1))}
                     className="flex h-12 w-12 items-center justify-center transition hover:bg-ink-100"
-                    aria-label="Increase quantity"
+                    aria-label={L10n("Increase quantity")}
                   >
                     <Plus size={15} />
                   </button>
@@ -300,7 +300,7 @@ const ProductDetail: React.FC = () => {
               <button
                 onClick={() => setQty((n) => Math.max(1, n - 1))}
                 className="flex h-12 w-12 items-center justify-center transition hover:bg-ink-100"
-                aria-label="Decrease quantity"
+                aria-label={L10n("Decrease quantity")}
               >
                 <Minus size={15} />
               </button>
@@ -310,7 +310,7 @@ const ProductDetail: React.FC = () => {
                   setQty((n) => (product.trackStock ? Math.min(product.stock, n + 1) : n + 1))
                 }
                 className="flex h-12 w-12 items-center justify-center transition hover:bg-ink-100"
-                aria-label="Increase quantity"
+                aria-label={L10n("Increase quantity")}
               >
                 <Plus size={15} />
               </button>
@@ -329,7 +329,7 @@ const ProductDetail: React.FC = () => {
 
           {!soldOut && (
             <Button variant="accent" size="lg" full className="mt-3" onClick={buyNow}>
-              Buy it now
+              {L10n("Buy it now")}
             </Button>
           )}
           </>

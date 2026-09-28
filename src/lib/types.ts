@@ -26,6 +26,9 @@ export interface Product {
   images: string[];
   /** Optional product video (direct MP4/WebM URL). */
   videoUrl?: string;
+  /** Storefront section (Cagua, Mangaze, ...). '' = none. */
+  sectionId?: string;
+  sectionName?: string;
   categoryId: string;
   categoryName: string;
   /** Google account of the seller who owns this listing. '' = the platform's own. */
@@ -318,4 +321,17 @@ export interface StoreSettings {
 
   updatedAt: number;
   updatedBy: string;
+}
+
+
+export interface Section {
+  id: ID;
+  name: string;
+  slug: string;
+  description: string;
+  image: string;
+  enabled: boolean;
+  showOnHome: boolean;
+  order: number;
+  createdAt: number;
 }

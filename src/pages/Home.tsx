@@ -8,6 +8,7 @@ import {
 } from '../components/HomeSections';
 import { Button, EmptyState } from '../components/ui';
 import { useI18n } from '../lib/i18n';
+import { L10n } from '../lib/i18n';
 
 /**
  * The home page renders whatever sections the administrator has enabled, in the
@@ -78,11 +79,11 @@ const Home: React.FC = () => {
         <div className="mx-auto max-w-3xl px-4 py-20 sm:px-6">
           <EmptyState
             icon={<PackageOpen size={44} />}
-            title="No products yet"
-            text="The shelves are empty. Sign in to the dashboard to add your first product — it will show up here instantly."
+            title={L10n("No products yet")}
+            text={L10n("The shelves are empty. Sign in to the dashboard to add your first product — it will show up here instantly.")}
             action={
               <Link to="/admin">
-                <Button size="lg">Open the dashboard</Button>
+                <Button size="lg">{L10n("Open the dashboard")}</Button>
               </Link>
             }
           />

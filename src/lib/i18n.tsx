@@ -3,6 +3,8 @@ import { EXTRA } from './i18n-extra';
 import { MORE } from './i18n-more';
 import { PAGES } from './i18n-pages';
 import { SEED } from './i18n-seed';
+import { SEED_UI } from './i18n-seed-ui';
+import { SECT } from './i18n-sections';
 import { setDateLocale } from './utils';
 import { useStore } from '../context/StoreContext';
 import { doc, onSnapshot } from 'firebase/firestore';
@@ -64,11 +66,29 @@ const rw: Dict = {
 };
 
 export const DICT: Record<Lang, Dict> = {
-  en: { ...en, ...EXTRA.en, ...MORE.en, ...PAGES.en },
-  fr: { ...fr, ...EXTRA.fr, ...MORE.fr, ...PAGES.fr },
-  ar: { ...ar, ...EXTRA.ar, ...MORE.ar, ...PAGES.ar },
-  rw: { ...rw, ...EXTRA.rw, ...MORE.rw, ...PAGES.rw },
+  en: { ...en, ...EXTRA.en, ...MORE.en, ...PAGES.en, ...SECT.en },
+  fr: { ...fr, ...EXTRA.fr, ...MORE.fr, ...PAGES.fr, ...SECT.fr },
+  ar: { ...ar, ...EXTRA.ar, ...MORE.ar, ...PAGES.ar, ...SECT.ar },
+  rw: { ...rw, ...EXTRA.rw, ...MORE.rw, ...PAGES.rw, ...SECT.rw },
 };
+
+const REV_EN: Record<string, string> = Object.create(null);
+for (const k of Object.keys(DICT.en)) { const v = DICT.en[k]; if (v && !(v in REV_EN)) REV_EN[v] = k; }
+function revLookup(lang: Lang, text: string): string {
+  if (lang === 'en') return '';
+  const k = REV_EN[text];
+  return k ? (DICT[lang][k] || '') : '';
+}
+/** True when a hand-written translation already exists for this English text. */
+export function hasBuiltIn(text: string): boolean {
+  return !!(REV_EN[text] || SEED_UI.rw?.[text] || SEED.rw?.[text]);
+}
+const live: { tx: (text: string) => string } = { tx: (s) => s };
+/** Hook-free translator: any file can wrap literal text as L10n('...'). The tree remounts on language change. */
+export function L10n(text: any): any {
+  if (typeof text === 'string') return text ? live.tx(text) : text;
+  return text;
+}
 
 /** Firestore-safe key for an interface string (no dots). */
 export const fsKey = (k: string) => k.replace(/\./g, '_');
@@ -171,7 +191,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const t = useCallback(
     (key: string, vars?: Record<string, string | number>) => {
-      let s = overrides?.[fsKey(key)] || DICT[lang][key] || DICT.en[key] || key;
+      let s = overrides?.[fsKey(key)] || DICT[lang][key] || (lang !== 'en' && DICT.en[key] ? live.tx(DICT.en[key]) : '') || DICT.en[key] || key;
       if (vars) for (const k of Object.keys(vars)) s = s.split('{' + k + '}').join(String(vars[k]));
       return s;
     },
@@ -179,7 +199,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   );
 
   const tx = useCallback(
-    (text: string) => (text && (overrides?.[textKey(text)] || SEED[lang]?.[text] || auto[textKey(text)])) || text,
+    (text: string) => (text && (overrides?.[textKey(text)] || SEED_UI[lang]?.[text] || SEED[lang]?.[text] || revLookup(lang, text) || auto[textKey(text)])) || text,
     [overrides, auto, lang],
   );
 
@@ -188,8 +208,10 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (base) document.title = tx(base);
   }, [tx, settings.seo?.title, settings.storeName]);
 
+  live.tx = tx;
+  const remountKey = lang + '|' + Object.keys(auto).length + '|' + (overrides ? Object.keys(overrides).length : 0);
   const value = useMemo(() => ({ lang, setLang, t, tx }), [lang, setLang, t, tx]);
-  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
+  return <Ctx.Provider value={value}><React.Fragment key={remountKey}>{children}</React.Fragment></Ctx.Provider>;
 };
 
 export function useI18n(): I18n {

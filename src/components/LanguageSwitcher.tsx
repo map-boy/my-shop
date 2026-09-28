@@ -1,6 +1,7 @@
 import React from 'react';
 import { Globe } from 'lucide-react';
 import { LANGS, useI18n, type Lang } from '../lib/i18n';
+import { L10n } from '../lib/i18n';
 
 const LanguageSwitcher: React.FC = () => {
   const { lang, setLang } = useI18n();
@@ -10,11 +11,11 @@ const LanguageSwitcher: React.FC = () => {
       <select
         value={lang}
         onChange={(e) => setLang(e.target.value as Lang)}
-        aria-label="Language"
+        aria-label={L10n("Language")}
         className="ml-1 max-w-[6.5rem] bg-transparent text-xs font-semibold outline-none"
       >
         {LANGS.map((l) => (
-          <option key={l.code} value={l.code}>{l.label}</option>
+          <option key={l.code} value={l.code}>{L10n(l.label)}</option>
         ))}
       </select>
     </label>

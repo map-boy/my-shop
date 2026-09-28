@@ -8,6 +8,7 @@ import { useToast } from '../context/ToastContext';
 import { Button, Field, Input, Textarea } from '../components/ui';
 import { errorMessage } from '../lib/utils';
 import { useI18n } from '../lib/i18n';
+import { L10n } from '../lib/i18n';
 
 const Contact: React.FC = () => {
   const { settings } = useStore();
@@ -65,7 +66,7 @@ const Contact: React.FC = () => {
                 <d.icon size={19} />
               </span>
               <div className="min-w-0">
-                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-ink-400">{d.label}</p>
+                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-ink-400">{L10n(d.label)}</p>
                 {d.href ? (
                   <a href={d.href} target={d.href.startsWith('http') ? '_blank' : undefined} rel="noreferrer" className="mt-1 block break-words text-sm font-semibold text-ink-900 hover:text-accent">
                     {d.value}
@@ -93,7 +94,7 @@ const Contact: React.FC = () => {
         <form onSubmit={submit} className="rounded-brand border border-ink-200 p-6 sm:p-8">
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label={t('contact.name')} required>
-              <Input value={form.name} onChange={set('name')} placeholder="Jane Doe" />
+              <Input value={form.name} onChange={set('name')} placeholder={L10n("Jane Doe")} />
             </Field>
             <Field label={t('contact.email')} required>
               <Input type="email" value={form.email} onChange={set('email')} placeholder="jane@example.com" />

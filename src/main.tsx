@@ -2,6 +2,7 @@
 import React from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import './index.css';
+import { L10n } from './lib/i18n';
 
 const container = document.getElementById('root');
 if (!container) throw new Error('Root element #root is missing from index.html');
@@ -39,10 +40,9 @@ function renderFatal(error: unknown) {
         color: '#171614',
       }}
     >
-      <h1 style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0 }}>The shop could not start</h1>
+      <h1 style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0 }}>{L10n("The shop could not start")}</h1>
       <p style={{ maxWidth: '32rem', lineHeight: 1.7, color: '#5d5a54', margin: 0 }}>
-        This is a configuration problem, not something a shopper did wrong. The most common cause is a
-        missing or blank <code>VITE_FIREBASE_API_KEY</code> in the build environment.
+        {L10n("This is a configuration problem, not something a shopper did wrong. The most common cause is a missing or blank")} <code>VITE_FIREBASE_API_KEY</code> {L10n("in the build environment.")}
       </p>
       <pre
         style={{
@@ -58,7 +58,7 @@ function renderFatal(error: unknown) {
       >
         {message}
       </pre>
-      <p style={{ fontSize: '0.7rem', color: '#a5a19a', margin: 0 }}>build {__BUILD_ID__}</p>
+      <p style={{ fontSize: '0.7rem', color: '#a5a19a', margin: 0 }}>{L10n("build")} {__BUILD_ID__}</p>
       <button
         onClick={() => window.location.reload()}
         style={{
@@ -76,7 +76,7 @@ function renderFatal(error: unknown) {
           cursor: 'pointer',
         }}
       >
-        Try again
+        {L10n("Try again")}
       </button>
     </div>,
   );

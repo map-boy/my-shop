@@ -9,6 +9,7 @@ import { useToast } from '../../context/ToastContext';
 import { logActivity } from '../../lib/activity';
 import { translateMissing } from '../../lib/autoTranslate';
 import ImageInput from '../../components/ImageInput';
+import { useSections } from '../../lib/sections';
 import VideoInput from '../../components/VideoInput';
 import { Button, Field, Input, Modal, Select, Textarea, Toggle } from '../../components/ui';
 import type { Product, ProductOption } from '../../lib/types';
@@ -17,7 +18,7 @@ import { cn, discountPercent, errorMessage, slugify } from '../../lib/utils';
 const BLANK: Omit<Product, 'id'> = {
   name: '', slug: '', sku: '', description: '', shortDescription: '',
   price: 0, compareAtPrice: 0, cost: 0,
-  images: [], videoUrl: '', categoryId: '', categoryName: '', tags: [],
+  images: [], videoUrl: '', categoryId: '', categoryName: '', sectionId: '', sectionName: '', tags: [],
   sellerId: '', sellerName: '',
   options: [], stock: 0, trackStock: true, status: 'active',
   featured: false, bestSeller: false, newArrival: true,
@@ -43,6 +44,7 @@ interface Props {
 
 const ProductEditor: React.FC<Props> = ({ open, product, onClose }) => {
   const { categories, money } = useStore();
+  const { sections } = useSections();
   const { admin, isSeller } = useAuth();
   const toast = useToast();
 
@@ -117,6 +119,7 @@ const ProductEditor: React.FC<Props> = ({ open, product, onClose }) => {
       name: form.name.trim(),
       slug: (slugTouched && form.slug ? form.slug : slugify(form.name)) || slugify(form.name),
       categoryName: category?.name ?? '',
+      sectionName: sections.find((s) => s.id === form.sectionId)?.name ?? '',
       // Ownership is stamped from the signed-in account, never from the form,
       // and an existing listing keeps the seller it already had. The security
       // rules reject anything else.
@@ -222,6 +225,15 @@ const ProductEditor: React.FC<Props> = ({ open, product, onClose }) => {
               <Input value={form.sku} onChange={(e) => set('sku', e.target.value)} placeholder="BAG-001" />
             </Field>
           </div>
+
+          <Field label="Section" hint="Cagua, Mangaze or any section created under Dashboard > Sections.">
+            <Select value={form.sectionId ?? ''} onChange={(e) => set('sectionId', e.target.value)}>
+              <option value="">No section</option>
+              {sections.map((s) => (
+                <option key={s.id} value={s.id}>{s.name}</option>
+              ))}
+            </Select>
+          </Field>
 
           <Field label="Short description" hint="One line shown under the product name.">
             <Input

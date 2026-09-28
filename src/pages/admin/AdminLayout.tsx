@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, NavLink, Navigate, Outlet, useLocation } from 'react-router-dom';
 import {
-  BadgePercent, Boxes, ExternalLink, LayoutDashboard, LayoutTemplate, LogOut, Mail,
+  BadgePercent, Boxes, ExternalLink, LayoutDashboard, LayoutGrid, LayoutTemplate, LogOut, Mail,
   Menu, Package, Settings as SettingsIcon, ShoppingCart, Store, Tags, Users, UserCog, X,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -10,6 +10,9 @@ import { useStore } from '../../context/StoreContext';
 import { useAdminData } from '../../hooks/useAdminData';
 import { Spinner } from '../../components/ui';
 import { cn } from '../../lib/utils';
+import { translateMissing } from '../../lib/autoTranslate';
+import { UI_STRINGS } from '../../lib/i18n-ui';
+import { DICT, hasBuiltIn, textKey } from '../../lib/i18n';
 
 interface NavItem {
   to: string;
@@ -27,6 +30,21 @@ const AdminLayout: React.FC = () => {
   const { orders, messages } = useAdminData();
   const [sidebar, setSidebar] = useState(false);
   const location = useLocation();
+
+  // One-time machine translation of every storefront label into French, Arabic and Kinyarwanda (owner/admin only).
+  useEffect(() => {
+    if (!managesEverything) return;
+    const missingKeys = Object.keys(DICT.en)
+      .filter((k) => (!DICT.ar[k] || !DICT.fr[k] || !DICT.rw[k]) && !DICT.en[k].includes('{'))
+      .map((k) => DICT.en[k]);
+    const list = [...UI_STRINGS.filter((s) => !hasBuiltIn(s)), ...missingKeys];
+    if (!list.length) return;
+    const key = 'uiTx.' + textKey(list.join('|'));
+    try { if (localStorage.getItem(key)) return; } catch { return; }
+    translateMissing(list)
+      .then((r) => { if (!r.failed) { try { localStorage.setItem(key, '1'); } catch { /* ignore */ } } })
+      .catch(() => undefined);
+  }, [managesEverything]);
 
   useEffect(() => {
     setSidebar(false);
@@ -57,6 +75,7 @@ const AdminLayout: React.FC = () => {
       items: [
         { to: '/admin/products', label: isSeller ? 'My products' : 'Products', icon: Package },
         { to: '/admin/categories', label: 'Categories', icon: Tags, platformOnly: true },
+        { to: '/admin/sections', label: 'Sections', icon: LayoutGrid, platformOnly: true },
         { to: '/admin/inventory', label: 'Inventory', icon: Boxes },
       ],
     },

@@ -2,6 +2,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Play, RotateCcw, ZoomIn, ZoomOut } from 'lucide-react';
 import { cn, PLACEHOLDER_IMAGE } from '../lib/utils';
+import { L10n } from '../lib/i18n';
 
 interface Props {
   images: string[];
@@ -144,7 +145,7 @@ const ProductGallery: React.FC<Props> = ({ images, videoUrl, alt, badge }) => {
                 onClick={() => zoomBy(-0.5)}
                 disabled={zoom.s <= MIN}
                 className="flex h-10 w-10 items-center justify-center text-ink-900 transition hover:bg-ink-100 disabled:opacity-30"
-                aria-label="Zoom out"
+                aria-label={L10n("Zoom out")}
               >
                 <ZoomOut size={17} />
               </button>
@@ -153,7 +154,7 @@ const ProductGallery: React.FC<Props> = ({ images, videoUrl, alt, badge }) => {
                 onClick={reset}
                 disabled={zoom.s === MIN}
                 className="flex h-10 w-10 items-center justify-center text-ink-900 transition hover:bg-ink-100 disabled:opacity-30"
-                aria-label="Reset zoom"
+                aria-label={L10n("Reset zoom")}
               >
                 <RotateCcw size={15} />
               </button>
@@ -162,7 +163,7 @@ const ProductGallery: React.FC<Props> = ({ images, videoUrl, alt, badge }) => {
                 onClick={() => zoomBy(0.5)}
                 disabled={zoom.s >= MAX}
                 className="flex h-10 w-10 items-center justify-center text-ink-900 transition hover:bg-ink-100 disabled:opacity-30"
-                aria-label="Zoom in"
+                aria-label={L10n("Zoom in")}
               >
                 <ZoomIn size={17} />
               </button>

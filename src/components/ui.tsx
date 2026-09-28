@@ -2,6 +2,7 @@
 import React from 'react';
 import { Loader2, X } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { L10n } from '../lib/i18n';
 
 /* -------------------------------------------------------------------------- */
 /*  Button                                                                     */
@@ -178,7 +179,7 @@ export const Spinner: React.FC<{ className?: string; size?: number }> = ({ class
   <Loader2 size={size} className={cn('animate-spin text-ink-400', className)} />
 );
 
-export const PageLoader: React.FC<{ label?: string }> = ({ label = 'Loading' }) => (
+export const PageLoader: React.FC<{ label?: string }> = ({ label = L10n("Loading") }) => (
   <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4">
     <Spinner size={28} />
     <p className="text-[11px] font-bold uppercase tracking-[0.25em] text-ink-400">{label}</p>
@@ -245,7 +246,7 @@ export const Modal: React.FC<{
               {title && <h2 className="font-display text-xl font-bold text-ink-900">{title}</h2>}
               {subtitle && <p className="mt-1 text-xs text-ink-500">{subtitle}</p>}
             </div>
-            <button onClick={onClose} className="rounded-lg p-2 text-ink-500 transition hover:bg-ink-100" aria-label="Close">
+            <button onClick={onClose} className="rounded-lg p-2 text-ink-500 transition hover:bg-ink-100" aria-label={L10n("Close")}>
               <X size={18} />
             </button>
           </header>
@@ -266,12 +267,12 @@ export const ConfirmDialog: React.FC<{
   busy?: boolean;
   onCancel: () => void;
   onConfirm: () => void;
-}> = ({ open, title, message, confirmLabel = 'Confirm', destructive, busy, onCancel, onConfirm }) => (
+}> = ({ open, title, message, confirmLabel = L10n("Confirm"), destructive, busy, onCancel, onConfirm }) => (
   <Modal open={open} onClose={onCancel} title={title} size="sm">
     <p className="text-sm leading-relaxed text-ink-600">{message}</p>
     <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
       <Button variant="outline" onClick={onCancel} disabled={busy}>
-        Cancel
+        {L10n("Cancel")}
       </Button>
       <Button variant={destructive ? 'danger' : 'primary'} onClick={onConfirm} loading={busy}>
         {confirmLabel}

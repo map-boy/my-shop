@@ -11,6 +11,7 @@ import { useToast } from '../context/ToastContext';
 import { Button, EmptyState, Field, Input, Textarea } from '../components/ui';
 import type { Coupon, Order } from '../lib/types';
 import { cn, errorMessage, orderNumber, PLACEHOLDER_IMAGE } from '../lib/utils';
+import { L10n } from '../lib/i18n';
 
 interface Form {
   name: string;
@@ -202,7 +203,7 @@ const Checkout: React.FC = () => {
             <h2 className="mb-5 font-display text-xl font-bold">{t('x.delivDetails')}</h2>
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label={t('x.fullName')} required>
-                <Input value={form.name} onChange={set('name')} placeholder="Jane Doe" autoComplete="name" />
+                <Input value={form.name} onChange={set('name')} placeholder={L10n("Jane Doe")} autoComplete="name" />
               </Field>
               <Field label={t('x.email')} required>
                 <Input type="email" value={form.email} onChange={set('email')} placeholder="jane@example.com" autoComplete="email" />
@@ -211,7 +212,7 @@ const Checkout: React.FC = () => {
                 <Input value={form.phone} onChange={set('phone')} placeholder="+250 7…" autoComplete="tel" />
               </Field>
               <Field label={t('x.city')}>
-                <Input value={form.city} onChange={set('city')} placeholder="Kigali" autoComplete="address-level2" />
+                <Input value={form.city} onChange={set('city')} placeholder={L10n("Kigali")} autoComplete="address-level2" />
               </Field>
               <Field label={t('x.address')} required className="sm:col-span-2">
                 <Input value={form.address} onChange={set('address')} placeholder={t('x.phAddr')} autoComplete="street-address" />
@@ -246,7 +247,7 @@ const Checkout: React.FC = () => {
                     {activeMethod === m.id && <span className="h-2.5 w-2.5 rounded-full bg-ink-900" />}
                   </span>
                   <span className="min-w-0">
-                    <span className="block text-sm font-bold text-ink-900">{m.label}</span>
+                    <span className="block text-sm font-bold text-ink-900">{L10n(m.label)}</span>
                     {m.hint && <span className="mt-1 block text-xs leading-relaxed text-ink-500">{m.hint}</span>}
                   </span>
                 </button>
@@ -280,7 +281,7 @@ const Checkout: React.FC = () => {
                     </span>
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-xs font-semibold">{l.name}</p>
+                    <p className="truncate text-xs font-semibold">{L10n(l.name)}</p>
                     {l.variant && <p className="truncate text-[11px] text-ink-500">{l.variant}</p>}
                   </div>
                   <span className="text-xs font-bold">{money(l.price * l.qty)}</span>

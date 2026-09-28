@@ -7,6 +7,7 @@ import { useCart } from '../context/CartContext';
 import { useStore } from '../context/StoreContext';
 import { Button, EmptyState } from '../components/ui';
 import { PLACEHOLDER_IMAGE } from '../lib/utils';
+import { L10n } from '../lib/i18n';
 
 const Cart: React.FC = () => {
   const { lines, setQty, remove, subtotal, lineKey, clear } = useCart();
@@ -58,7 +59,7 @@ const Cart: React.FC = () => {
                   <div className="flex min-w-0 flex-1 flex-col">
                     <div className="flex items-start justify-between gap-4">
                       <div className="min-w-0">
-                        <p className="font-semibold text-ink-900">{line.name}</p>
+                        <p className="font-semibold text-ink-900">{L10n(line.name)}</p>
                         {line.variant && <p className="mt-1 text-xs text-ink-500">{line.variant}</p>}
                         <p className="mt-1 text-sm text-ink-500">{t('x.each', { price: money(line.price) })}</p>
                       </div>

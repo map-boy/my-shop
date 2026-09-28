@@ -14,6 +14,7 @@ import type { Product } from '../lib/types';
 import ProductCard, { ProductCardSkeleton } from './ProductCard';
 import { Button, SectionHeading } from './ui';
 import { cn, PLACEHOLDER_IMAGE } from '../lib/utils';
+import { L10n } from '../lib/i18n';
 
 const Container: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className }) => (
   <div className={cn('mx-auto max-w-7xl px-4 sm:px-6', className)}>{children}</div>
@@ -111,14 +112,14 @@ export const Hero: React.FC = () => {
           <button
             onClick={() => setIndex((i) => (i - 1 + slides.length) % slides.length)}
             className="absolute left-3 top-1/2 hidden -translate-y-1/2 rounded-full border border-white/25 p-3 text-white/80 backdrop-blur-sm transition hover:bg-white/15 sm:block"
-            aria-label="Previous slide"
+            aria-label={L10n("Previous slide")}
           >
             <ChevronLeft size={20} />
           </button>
           <button
             onClick={() => setIndex((i) => (i + 1) % slides.length)}
             className="absolute right-3 top-1/2 hidden -translate-y-1/2 rounded-full border border-white/25 p-3 text-white/80 backdrop-blur-sm transition hover:bg-white/15 sm:block"
-            aria-label="Next slide"
+            aria-label={L10n("Next slide")}
           >
             <ChevronRight size={20} />
           </button>

@@ -8,6 +8,7 @@ import { useStore } from '../context/StoreContext';
 import { useToast } from '../context/ToastContext';
 import { Button } from './ui';
 import { useI18n } from '../lib/i18n';
+import { L10n } from '../lib/i18n';
 
 const SOCIAL_ICONS = {
   facebook: Facebook,
@@ -125,7 +126,7 @@ const Footer: React.FC = () => {
               {settings.contact.address && (
                 <li className="flex items-start gap-3">
                   <MapPin size={16} className="mt-0.5 shrink-0 text-accent" />
-                  <span>{settings.contact.address}</span>
+                  <span>{L10n(settings.contact.address)}</span>
                 </li>
               )}
             </ul>

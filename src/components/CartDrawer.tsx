@@ -7,6 +7,7 @@ import { useCart } from '../context/CartContext';
 import { useStore } from '../context/StoreContext';
 import { Button, EmptyState } from './ui';
 import { PLACEHOLDER_IMAGE } from '../lib/utils';
+import { L10n } from '../lib/i18n';
 
 const CartDrawer: React.FC = () => {
   const { lines, open, setOpen, setQty, remove, subtotal, count, lineKey } = useCart();
@@ -85,7 +86,7 @@ const CartDrawer: React.FC = () => {
                       <div className="flex min-w-0 flex-1 flex-col">
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0">
-                            <p className="line-clamp-2 text-sm font-semibold text-ink-900">{line.name}</p>
+                            <p className="line-clamp-2 text-sm font-semibold text-ink-900">{L10n(line.name)}</p>
                             {line.variant && <p className="mt-0.5 text-xs text-ink-500">{line.variant}</p>}
                           </div>
                           <button

@@ -8,13 +8,14 @@ import { useCart } from '../context/CartContext';
 import { cn } from '../lib/utils';
 import { useI18n } from '../lib/i18n';
 import LanguageSwitcher from './LanguageSwitcher';
+import { L10n } from '../lib/i18n';
 
 const LINKS = [
-  { label: 'Home', to: '/' },
-  { label: 'Shop', to: '/shop' },
-  { label: 'Categories', to: '/categories' },
-  { label: 'About', to: '/about' },
-  { label: 'Contact', to: '/contact' },
+  { get label() { return L10n("Home"); }, to: '/' },
+  { get label() { return L10n("Shop"); }, to: '/shop' },
+  { get label() { return L10n("Categories"); }, to: '/categories' },
+  { get label() { return L10n("About"); }, to: '/about' },
+  { get label() { return L10n("Contact"); }, to: '/contact' },
 ];
 
 const AnnouncementBar: React.FC = () => {
@@ -77,7 +78,7 @@ const Navbar: React.FC = () => {
           <button
             onClick={() => setMenu(true)}
             className="-ml-2 rounded-lg p-2 text-ink-800 transition hover:bg-ink-100 lg:hidden"
-            aria-label="Open menu"
+            aria-label={L10n("Open menu")}
           >
             <Menu size={22} />
           </button>
@@ -127,7 +128,7 @@ const Navbar: React.FC = () => {
             <button
               onClick={() => setSearchOpen((v) => !v)}
               className="rounded-lg p-2.5 text-ink-800 transition hover:bg-ink-100 xl:hidden"
-              aria-label="Search"
+              aria-label={L10n("Search")}
             >
               <Search size={20} />
             </button>
@@ -185,7 +186,7 @@ const Navbar: React.FC = () => {
           <aside className="animate-slide-in absolute right-0 top-0 flex h-full w-[85%] max-w-sm flex-col bg-white">
             <div className="flex items-center justify-between border-b border-ink-200 px-5 py-5">
               <span className="font-display text-lg font-bold">{settings.storeName}</span>
-              <button onClick={() => setMenu(false)} className="rounded-lg p-2 hover:bg-ink-100" aria-label="Close menu">
+              <button onClick={() => setMenu(false)} className="rounded-lg p-2 hover:bg-ink-100" aria-label={L10n("Close menu")}>
                 <X size={20} />
               </button>
             </div>
@@ -230,7 +231,7 @@ const Navbar: React.FC = () => {
 
             <div className="border-t border-ink-200 px-5 py-5 text-xs text-ink-500">
               <p className="font-semibold text-ink-800">{settings.contact.phone}</p>
-              <p className="mt-1">{settings.contact.hours}</p>
+              <p className="mt-1">{L10n(settings.contact.hours)}</p>
             </div>
           </aside>
         </div>
