@@ -79,8 +79,9 @@ export default async function handler(req, res) {
   const priceLabel = `${CURRENCY_SYMBOL} ${Math.round(price).toLocaleString("en-RW")}`;
   const rawImage = Array.isArray(product.images) && product.images[0] ? product.images[0] : `${SITE_ORIGIN}/favicon.svg`;
   // Resized copy (well under 300 KB) so WhatsApp shows a sharp preview instead of a blurry thumbnail.
+  const hasVideo = typeof product.videoUrl === "string" && product.videoUrl.length > 0;
   const image = rawImage.startsWith("https://firebasestorage.googleapis.com/")
-    ? `${SITE_ORIGIN}/api/og-image?u=${encodeURIComponent(rawImage)}`
+    ? `${SITE_ORIGIN}/api/og-image?${hasVideo ? "play=1&" : ""}u=${encodeURIComponent(rawImage)}`
     : rawImage;
   const description = product.shortDescription || product.description || "Shop this on My Shop.";
 
@@ -90,7 +91,7 @@ export default async function handler(req, res) {
 <meta charset="UTF-8" />
 <title>${escapeHtml(name)} — My Shop</title>
 <meta property="og:type" content="product" />
-<meta property="og:title" content="${escapeHtml(name)} — ${escapeHtml(priceLabel)}" />
+<meta property="og:title" content="${hasVideo ? "▶ " : ""}${escapeHtml(name)} — ${escapeHtml(priceLabel)}" />
 <meta property="og:description" content="${escapeHtml(description)}" />
 <meta property="og:image" content="${escapeHtml(image)}" />
 <meta property="og:image:secure_url" content="${escapeHtml(image)}" />
