@@ -79,8 +79,8 @@ export default async function handler(req, res) {
   const priceLabel = `${CURRENCY_SYMBOL} ${Math.round(price).toLocaleString("en-RW")}`;
   const rawImage = Array.isArray(product.images) && product.images[0] ? product.images[0] : `${SITE_ORIGIN}/favicon.svg`;
   // Resized copy (well under 300 KB) so WhatsApp shows a sharp preview instead of a blurry thumbnail.
-  const image = rawImage.startsWith("http") && !rawImage.endsWith(".svg")
-    ? `https://wsrv.nl/?url=${encodeURIComponent(rawImage)}&w=800&h=800&fit=cover&q=75&output=jpg`
+  const image = rawImage.startsWith("https://firebasestorage.googleapis.com/")
+    ? `${SITE_ORIGIN}/api/og-image?u=${encodeURIComponent(rawImage)}`
     : rawImage;
   const description = product.shortDescription || product.description || "Shop this on My Shop.";
 
