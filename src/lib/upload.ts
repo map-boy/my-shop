@@ -7,12 +7,33 @@ export interface UploadResult {
   path: string;
 }
 
+/** Shrinks big photos so link previews (WhatsApp wants roughly <300 KB) load sharp instead of blurry. */
+async function compressImage(file: File, maxSide = 1200, quality = 0.82): Promise<File> {
+  if (!file.type.startsWith('image/') || file.type === 'image/gif' || file.type === 'image/svg+xml') return file;
+  try {
+    const bmp = await createImageBitmap(file);
+    const scale = Math.min(1, maxSide / Math.max(bmp.width, bmp.height));
+    if (scale === 1 && file.size < 250 * 1024) return file;
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(bmp.width * scale);
+    canvas.height = Math.round(bmp.height * scale);
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return file;
+    ctx.drawImage(bmp, 0, 0, canvas.width, canvas.height);
+    const blob: Blob | null = await new Promise((r) => canvas.toBlob(r, 'image/jpeg', quality));
+    if (!blob || blob.size >= file.size) return file;
+    return new File([blob], file.name.replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg' });
+  } catch {
+    return file;
+  }
+}
 /** Uploads a file to Cloud Storage and reports progress 0-100. */
-export function uploadFile(
+export async function uploadFile(
   file: File,
   folder = 'products',
   onProgress?: (pct: number) => void,
 ): Promise<UploadResult> {
+  file = await compressImage(file);
   const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
   const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${safe}`;
   const task = uploadBytesResumable(ref(storage, path), file, {

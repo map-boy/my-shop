@@ -2,7 +2,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
-  ChevronRight, Minus, Plus, RefreshCw, Share2, ShieldCheck, ShoppingBag, Star, Truck,
+  ChevronRight, MessageCircle, Minus, Plus, RefreshCw, Share2, ShieldCheck, ShoppingBag, Star, Truck,
 } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -15,6 +15,7 @@ import ProductGallery from '../components/ProductGallery';
 import { Badge, Button, PageLoader, SectionHeading } from '../components/ui';
 import type { Product } from '../lib/types';
 import { cn, discountPercent, PLACEHOLDER_IMAGE } from '../lib/utils';
+import { useI18n } from '../lib/i18n';
 
 const ProductDetail: React.FC = () => {
   const { slug = '' } = useParams();
@@ -23,6 +24,7 @@ const ProductDetail: React.FC = () => {
   const { add, setOpen } = useCart();
   const toast = useToast();
   const navigate = useNavigate();
+  const { t: tr } = useI18n();
 
   const [qty, setQty] = useState(1);
   const [choices, setChoices] = useState<Record<string, string>>({});
@@ -136,6 +138,18 @@ const ProductDetail: React.FC = () => {
     }
   };
 
+  const variantText = (product.options ?? [])
+    .map((o) => (choices[o.name] ? `${o.name}: ${choices[o.name]}` : ''))
+    .filter(Boolean)
+    .join(', ');
+  const waNumber = (settings.contact.whatsapp || '').replace(/[^0-9]/g, '');
+  const productUrl = window.location.origin + '/product/' + (product.slug || product.id);
+  const waText =
+    tr('waMessage', { name: product.name, qty, price: money(product.price * qty) }) +
+    (variantText ? '\n' + variantText : '') +
+    '\n' + productUrl;
+  const waHref = waNumber ? `https://wa.me/${waNumber}?text=${encodeURIComponent(waText)}` : '';
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12">
       <nav className="mb-8 flex items-center gap-1.5 text-xs text-ink-500">
@@ -168,7 +182,7 @@ const ProductDetail: React.FC = () => {
           badge={
             off > 0 ? (
               <span className="rounded-full bg-red-600 px-3 py-1.5 text-[11px] font-black uppercase tracking-wider text-white">
-                Save {off}%
+                {tr('save', { n: off })}
               </span>
             ) : null
           }
@@ -203,11 +217,11 @@ const ProductDetail: React.FC = () => {
             <span className="text-3xl font-bold">{money(product.price)}</span>
             {off > 0 && <span className="text-lg text-ink-400 line-through">{money(product.compareAtPrice)}</span>}
             {soldOut ? (
-              <Badge tone="red">Sold out</Badge>
+              <Badge tone="red">{tr('soldOut')}</Badge>
             ) : lowStock ? (
-              <Badge tone="amber">Only {product.stock} left</Badge>
+              <Badge tone="amber">{tr('onlyLeft', { n: product.stock })}</Badge>
             ) : (
-              <Badge tone="green">In stock</Badge>
+              <Badge tone="green">{tr('inStock')}</Badge>
             )}
           </div>
 
@@ -237,6 +251,50 @@ const ProductDetail: React.FC = () => {
             </div>
           ))}
 
+          {settings.whatsappOnly ? (
+            <div className="mt-9 space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center rounded-xl border border-ink-200">
+                  <button
+                    onClick={() => setQty((n) => Math.max(1, n - 1))}
+                    className="flex h-12 w-12 items-center justify-center transition hover:bg-ink-100"
+                    aria-label="Decrease quantity"
+                  >
+                    <Minus size={15} />
+                  </button>
+                  <span className="w-10 text-center font-bold">{qty}</span>
+                  <button
+                    onClick={() => setQty((n) => (product.trackStock ? Math.min(product.stock, n + 1) : n + 1))}
+                    className="flex h-12 w-12 items-center justify-center transition hover:bg-ink-100"
+                    aria-label="Increase quantity"
+                  >
+                    <Plus size={15} />
+                  </button>
+                </div>
+              </div>
+              {waHref && (
+                <a href={waHref}
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={(e) => {
+                    if (soldOut) e.preventDefault();
+                    else if (missingChoice) {
+                      e.preventDefault();
+                      toast.error(tr('chooseOption'));
+                    }
+                  }}
+                  className={cn(
+                    'flex h-14 w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] text-sm font-bold uppercase tracking-wider text-white transition hover:brightness-95',
+                    soldOut && 'pointer-events-none opacity-50',
+                  )}
+                >
+                  <MessageCircle size={18} />
+                  {soldOut ? tr('soldOut') : tr('orderWhatsapp')}
+                </a>
+              )}
+            </div>
+          ) : (
+          <>
           <div className="mt-9 flex flex-wrap items-center gap-3">
             <div className="flex items-center rounded-xl border border-ink-200">
               <button
@@ -265,7 +323,7 @@ const ProductDetail: React.FC = () => {
               onClick={addToCart}
               icon={<ShoppingBag size={17} />}
             >
-              {soldOut ? 'Sold out' : 'Add to bag'}
+              {soldOut ? tr('soldOut') : tr('addToBag')}
             </Button>
           </div>
 
@@ -273,6 +331,8 @@ const ProductDetail: React.FC = () => {
             <Button variant="accent" size="lg" full className="mt-3" onClick={buyNow}>
               Buy it now
             </Button>
+          )}
+          </>
           )}
 
           <button
@@ -282,21 +342,21 @@ const ProductDetail: React.FC = () => {
             className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-ink-200 py-3 text-sm font-semibold text-ink-700 transition hover:border-ink-900 hover:text-ink-900 disabled:opacity-50"
           >
             <Share2 size={16} />
-            {sharing ? 'Preparing link...' : 'Share to Status'}
+            {sharing ? tr('preparing') : tr('share')}
           </button>
 
           <ul className="mt-9 grid gap-4 border-t border-ink-200 pt-8 sm:grid-cols-3">
             <li className="flex items-start gap-3 text-xs text-ink-600">
               <Truck size={17} className="mt-0.5 shrink-0 text-accent" />
-              <span>{settings.shipping.freeOver > 0 ? `Free over ${money(settings.shipping.freeOver)}` : 'Fast delivery'}</span>
+              <span>{settings.shipping.freeOver > 0 ? tr('freeOver', { amount: money(settings.shipping.freeOver) }) : tr('fastDelivery')}</span>
             </li>
             <li className="flex items-start gap-3 text-xs text-ink-600">
               <RefreshCw size={17} className="mt-0.5 shrink-0 text-accent" />
-              <span>7-day easy returns</span>
+              <span>{tr('returns')}</span>
             </li>
             <li className="flex items-start gap-3 text-xs text-ink-600">
               <ShieldCheck size={17} className="mt-0.5 shrink-0 text-accent" />
-              <span>Secure checkout</span>
+              <span>{tr('secure')}</span>
             </li>
           </ul>
 
@@ -322,7 +382,7 @@ const ProductDetail: React.FC = () => {
                 tab === t ? 'border-ink-900 text-ink-900' : 'border-transparent text-ink-400 hover:text-ink-700',
               )}
             >
-              {t === 'description' ? 'Description' : 'Delivery & returns'}
+              {t === 'description' ? tr('description') : tr('deliveryReturns')}
             </button>
           ))}
         </div>

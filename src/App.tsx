@@ -6,6 +6,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { StoreProvider, useStore } from './context/StoreContext';
 import { CartProvider } from './context/CartContext';
 import { ToastProvider } from './context/ToastContext';
+import { LanguageProvider } from './lib/i18n';
 import { AdminDataProvider } from './hooks/useAdminData';
 
 import Navbar from './components/Navbar';
@@ -102,7 +103,7 @@ const StoreLayout: React.FC = () => {
 
 const App: React.FC = () => (
   <BrowserRouter>
-    <ToastProvider>
+    <LanguageProvider><ToastProvider>
       <AuthProvider>
         <StoreProvider>
           <CartProvider>
@@ -154,7 +155,7 @@ const App: React.FC = () => (
           </CartProvider>
         </StoreProvider>
       </AuthProvider>
-    </ToastProvider>
+    </ToastProvider></LanguageProvider>
   </BrowserRouter>
 );
 

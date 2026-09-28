@@ -221,6 +221,15 @@ const AdminSettings: React.FC = () => {
 
           {tab === 'commerce' && (
             <>
+              <Panel title="Ordering" description="Choose how shoppers place orders.">
+                <Toggle
+                  checked={draft.whatsappOnly}
+                  onChange={(v) => set('whatsappOnly', v)}
+                  label="WhatsApp-only ordering"
+                  hint="Hides Add to bag, Buy it now, the cart and checkout. Shoppers get an Order on WhatsApp button instead."
+                />
+              </Panel>
+
               <Panel title="Delivery" description="How much shoppers pay to receive their order.">
                 <Toggle
                   checked={draft.shipping.enabled}

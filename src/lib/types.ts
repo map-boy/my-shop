@@ -300,6 +300,8 @@ export interface StoreSettings {
   tax: { enabled: boolean; rate: number; label: string };
   payments: { cod: boolean; mobileMoney: boolean; card: boolean; bank: boolean; instructions: string };
   checkout: { requirePhone: boolean; allowNotes: boolean; minOrder: number };
+  /** true = no cart/checkout; shoppers order by WhatsApp. */
+  whatsappOnly: boolean;
 
   /* Contact & social */
   contact: { phone: string; whatsapp: string; email: string; address: string; hours: string; mapUrl: string };

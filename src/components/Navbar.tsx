@@ -6,6 +6,8 @@ import { useStore } from '../context/StoreContext';
 import DeliveryBanner from './DeliveryBanner';
 import { useCart } from '../context/CartContext';
 import { cn } from '../lib/utils';
+import { useI18n } from '../lib/i18n';
+import LanguageSwitcher from './LanguageSwitcher';
 
 const LINKS = [
   { label: 'Home', to: '/' },
@@ -30,6 +32,7 @@ const AnnouncementBar: React.FC = () => {
 
 const Navbar: React.FC = () => {
   const { settings, categories } = useStore();
+  const { t } = useI18n();
   const { count, setOpen } = useCart();
   const [menu, setMenu] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -104,7 +107,7 @@ const Navbar: React.FC = () => {
                   )
                 }
               >
-                {l.label}
+                {t('nav.' + l.label.toLowerCase())}
               </NavLink>
             ))}
           </nav>
@@ -115,7 +118,7 @@ const Navbar: React.FC = () => {
               <input
                 value={term}
                 onChange={(e) => setTerm(e.target.value)}
-                placeholder="Search products…"
+                placeholder={t('search')}
                 className="h-10 w-56 rounded-full border border-ink-200 bg-ink-50 pl-10 pr-4 text-sm outline-none transition focus:w-72 focus:border-ink-400 focus:bg-white"
               />
             </form>
@@ -128,18 +131,20 @@ const Navbar: React.FC = () => {
               <Search size={20} />
             </button>
 
+            <LanguageSwitcher />
             {settings.contact.whatsapp && (
               <a
                 href={`https://wa.me/${settings.contact.whatsapp.replace(/[^0-9]/g, '')}`}
                 target="_blank"
                 rel="noreferrer"
-                className="hidden rounded-lg p-2.5 text-ink-800 transition hover:bg-ink-100 sm:block"
+                className="rounded-lg p-2.5 text-ink-800 transition hover:bg-ink-100"
                 aria-label="WhatsApp"
               >
                 <Phone size={20} />
               </a>
             )}
 
+            {!settings.whatsappOnly && (
             <button
               onClick={() => setOpen(true)}
               className="relative rounded-lg p-2.5 text-ink-800 transition hover:bg-ink-100"
@@ -152,6 +157,7 @@ const Navbar: React.FC = () => {
                 </span>
               )}
             </button>
+            )}
           </div>
         </div>
 
@@ -163,7 +169,7 @@ const Navbar: React.FC = () => {
                 autoFocus
                 value={term}
                 onChange={(e) => setTerm(e.target.value)}
-                placeholder="Search products…"
+                placeholder={t('search')}
                 className="h-11 w-full rounded-full border border-ink-200 bg-ink-50 pl-10 pr-4 text-sm outline-none focus:border-ink-400 focus:bg-white"
               />
             </div>
@@ -197,7 +203,7 @@ const Navbar: React.FC = () => {
                     )
                   }
                 >
-                  {l.label}
+                  {t('nav.' + l.label.toLowerCase())}
                   <ChevronRight size={16} className="text-ink-400" />
                 </NavLink>
               ))}

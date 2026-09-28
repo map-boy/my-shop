@@ -178,3 +178,9 @@ select.field { appearance: none; background-image: none; }
 @media print {
   .no-print { display: none !important; }
 }
+
+/* Arabic: right-to-left with a font that has Arabic glyphs */
+html[dir='rtl'] body,
+html[dir='rtl'] .font-display {
+  font-family: 'Noto Sans Arabic', 'Inter', system-ui, sans-serif;
+}

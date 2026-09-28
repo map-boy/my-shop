@@ -77,7 +77,11 @@ export default async function handler(req, res) {
   const name = product.name || "Product";
   const price = typeof product.price === "number" ? product.price : 0;
   const priceLabel = `${CURRENCY_SYMBOL} ${Math.round(price).toLocaleString("en-RW")}`;
-  const image = Array.isArray(product.images) && product.images[0] ? product.images[0] : `${SITE_ORIGIN}/favicon.svg`;
+  const rawImage = Array.isArray(product.images) && product.images[0] ? product.images[0] : `${SITE_ORIGIN}/favicon.svg`;
+  // Resized copy (well under 300 KB) so WhatsApp shows a sharp preview instead of a blurry thumbnail.
+  const image = rawImage.startsWith("http") && !rawImage.endsWith(".svg")
+    ? `https://wsrv.nl/?url=${encodeURIComponent(rawImage)}&w=800&h=800&fit=cover&q=75&output=jpg`
+    : rawImage;
   const description = product.shortDescription || product.description || "Shop this on My Shop.";
 
   const html = `<!doctype html>
@@ -89,6 +93,11 @@ export default async function handler(req, res) {
 <meta property="og:title" content="${escapeHtml(name)} — ${escapeHtml(priceLabel)}" />
 <meta property="og:description" content="${escapeHtml(description)}" />
 <meta property="og:image" content="${escapeHtml(image)}" />
+<meta property="og:image:secure_url" content="${escapeHtml(image)}" />
+<meta property="og:image:alt" content="${escapeHtml(name)}" />
+<meta property="og:image:width" content="800" />
+<meta property="og:image:height" content="800" />
+<meta property="og:site_name" content="Karibu" />
 <meta property="og:url" content="${escapeHtml(pageUrl)}" />
 <meta name="twitter:card" content="summary_large_image" />
 <meta http-equiv="refresh" content="0; url=${escapeHtml(pageUrl)}" />

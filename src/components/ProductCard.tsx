@@ -13,7 +13,7 @@ interface Props {
 }
 
 const ProductCard: React.FC<Props> = ({ product, className }) => {
-  const { money } = useStore();
+  const { money, settings } = useStore();
   const { add } = useCart();
 
   const off = discountPercent(product.price, product.compareAtPrice);
@@ -70,7 +70,7 @@ const ProductCard: React.FC<Props> = ({ product, className }) => {
           </div>
         )}
 
-        {!soldOut && (
+        {!soldOut && !settings.whatsappOnly && (
           <button
             onClick={quickAdd}
             aria-label={`Add ${product.name} to cart`}

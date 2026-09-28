@@ -168,6 +168,7 @@ export const DEFAULT_SETTINGS: StoreSettings = {
       'We confirm your order as soon as the payment lands.',
   },
   checkout: { requirePhone: true, allowNotes: true, minOrder: 0 },
+  whatsappOnly: true,
 
   contact: {
     phone: '+250 780 867 473',
