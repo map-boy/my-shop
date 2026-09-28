@@ -5,6 +5,7 @@ import { ArrowDown, ArrowUp, Pencil, Plus, Star, Tags, Trash2 } from 'lucide-rea
 import { db } from '../../lib/firebase';
 import { useStore } from '../../context/StoreContext';
 import { useAuth } from '../../context/AuthContext';
+import { translateMissing } from '../../lib/autoTranslate';
 import { useToast } from '../../context/ToastContext';
 import { logActivity } from '../../lib/activity';
 import ImageInput from '../../components/ImageInput';
@@ -58,10 +59,12 @@ const AdminCategories: React.FC = () => {
           await batch.commit();
         }
         logActivity(admin?.email ?? 'admin', 'updated category', payload.name);
+        void translateMissing([payload.name, payload.description]).catch(() => undefined);
         toast.success('Category updated.');
       } else {
         await addDoc(collection(db, 'categories'), payload);
         logActivity(admin?.email ?? 'admin', 'created category', payload.name);
+        void translateMissing([payload.name, payload.description]).catch(() => undefined);
         toast.success('Category created.');
       }
       setOpen(false);

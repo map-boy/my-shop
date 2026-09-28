@@ -7,6 +7,7 @@ import { useStore } from '../../context/StoreContext';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { logActivity } from '../../lib/activity';
+import { translateMissing } from '../../lib/autoTranslate';
 import ImageInput from '../../components/ImageInput';
 import VideoInput from '../../components/VideoInput';
 import { Button, Field, Input, Modal, Select, Textarea, Toggle } from '../../components/ui';
@@ -87,6 +88,16 @@ const ProductEditor: React.FC<Props> = ({ open, product, onClose }) => {
   const patchOption = (i: number, patch: Partial<ProductOption>) =>
     set('options', form.options.map((o, idx) => (idx === i ? { ...o, ...patch } : o)));
 
+  const autoTranslate = (p: Omit<Product, 'id'>) => {
+    const texts = [p.name, p.shortDescription, p.description, p.categoryName, ...p.options.flatMap((o) => [o.name, ...o.values])];
+    translateMissing(texts)
+      .then((r) => {
+        if (r.added) toast.success('Translated into French, Arabic and Kinyarwanda.');
+        if (r.failed) toast.error('Some text could not be auto-translated. Open Store settings > Languages & text and press Translate everything now.');
+      })
+      .catch(() => toast.error('Saved, but auto-translation failed. Open Store settings > Languages & text and press Translate everything now.'));
+  };
+
   const save = async (andPublish?: boolean) => {
     if (!form.name.trim()) {
       setTab('basics');
@@ -127,10 +138,12 @@ const ProductEditor: React.FC<Props> = ({ open, product, onClose }) => {
       if (product) {
         await setDoc(doc(db, 'products', product.id), payload, { merge: true });
         logActivity(admin?.email ?? 'admin', 'updated product', payload.name);
+        autoTranslate(payload);
         toast.success(`“${payload.name}” updated.`);
       } else {
         await addDoc(collection(db, 'products'), { ...payload, createdAtServer: serverTimestamp() });
         logActivity(admin?.email ?? 'admin', 'created product', payload.name);
+        autoTranslate(payload);
         toast.success(`“${payload.name}” is now on the shop.`);
       }
       onClose();

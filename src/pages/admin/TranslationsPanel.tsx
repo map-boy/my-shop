@@ -1,10 +1,14 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { doc, onSnapshot } from 'firebase/firestore';
 import { Search } from 'lucide-react';
 import { useStore } from '../../context/StoreContext';
 import { DICT, LANGS, fsKey, textKey, type Lang } from '../../lib/i18n';
 import { Input, Select, Textarea } from '../../components/ui';
 import type { StoreSettings } from '../../lib/types';
-import { cn } from '../../lib/utils';
+import { cn, errorMessage } from '../../lib/utils';
+import { db } from '../../lib/firebase';
+import { translateMissing } from '../../lib/autoTranslate';
+import { useToast } from '../../context/ToastContext';
 
 type Store = Record<string, Record<string, string>>;
 
@@ -30,6 +34,17 @@ const TranslationsPanel: React.FC<Props> = ({ draft, value, onChange }) => {
   const [lang, setLang] = useState<Lang>('fr');
   const [group, setGroup] = useState('');
   const [term, setTerm] = useState('');
+  const toast = useToast();
+  const [busy, setBusy] = useState(false);
+  const [autoDoc, setAutoDoc] = useState<Record<string, string>>({});
+  useEffect(() => {
+    if (lang === 'en') { setAutoDoc({}); return undefined; }
+    return onSnapshot(
+      doc(db, 'translations', lang),
+      (s) => setAutoDoc((s.data() as { m?: Record<string, string> } | undefined)?.m ?? {}),
+      () => undefined,
+    );
+  }, [lang]);
 
   const rows = useMemo<Row[]>(() => {
     const out: Row[] = [];
@@ -115,11 +130,24 @@ const TranslationsPanel: React.FC<Props> = ({ draft, value, onChange }) => {
   const setText = (key: string, text: string) =>
     onChange({ ...value, [lang]: { ...(value[lang] ?? {}), [key]: text } });
 
+  const translateAll = async () => {
+    setBusy(true);
+    try {
+      const r = await translateMissing(rows.filter((x) => !x.hint).map((x) => x.source));
+      if (r.failed) toast.error(`${r.failed} texts could not be translated. Press the button again to retry.`);
+      else toast.success(r.added ? `Translated ${r.added} new texts.` : 'Everything is already translated.');
+    } catch (err) {
+      toast.error(errorMessage(err));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <div className="space-y-5">
       <p className="text-xs leading-relaxed text-ink-400">
         Pick a language, then type the translation under each text. Empty boxes use the built-in translation
-        (interface text) or the original text (everything else). Editing the original text of a banner or product
+        (interface text) or the automatic translation shown in grey (everything else). Editing the original text of a banner or product
         makes it show up here again as a new line to translate. Press Save at the bottom when you are done.
       </p>
 
@@ -154,12 +182,21 @@ const TranslationsPanel: React.FC<Props> = ({ draft, value, onChange }) => {
         </div>
       </div>
 
+            <button
+        type="button"
+        onClick={translateAll}
+        disabled={busy}
+        className="rounded-xl bg-accent px-4 py-2.5 text-[13px] font-semibold text-ink-950 transition hover:brightness-95 disabled:opacity-50"
+      >
+        {busy ? 'Translating...' : 'Translate everything now'}
+      </button>
+
       <p className="text-[11px] text-ink-500">{shown.length} texts</p>
 
       <div className="space-y-4">
         {shown.slice(0, 250).map((r) => {
           const cur = value[lang]?.[r.key] ?? '';
-          const fallback = r.hint ? (DICT[lang][r.hint] ?? '') : '';
+          const fallback = r.hint ? (DICT[lang][r.hint] ?? '') : (autoDoc[r.key] ?? '');
           return (
             <div key={`${r.group}-${r.key}`} className="rounded-xl border border-white/10 p-4">
               <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-ink-500">

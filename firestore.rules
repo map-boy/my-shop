@@ -117,6 +117,9 @@ service cloud.firestore {
     // every order keeps paying into the one MoMo code.
     match /settings/{id}   { allow read: if true; allow write: if managesEverything(); }
     match /pages/{id}      { allow read: if true; allow write: if managesEverything(); }
+    // Auto-translations: read by the storefront, written by signed-in staff (admin save + Translate everything).
+    match /translations/{id} { allow read: if true; allow write: if isAdmin(); }
+
     match /media/{id}      { allow read: if true; allow write: if isAdmin(); }
 
     // --- Orders -------------------------------------------------------------

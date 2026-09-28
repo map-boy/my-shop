@@ -2,6 +2,8 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 import { EXTRA } from './i18n-extra';
 import { MORE } from './i18n-more';
 import { useStore } from '../context/StoreContext';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { db } from './firebase';
 
 export type Lang = 'en' | 'fr' | 'ar' | 'rw';
 
@@ -104,6 +106,21 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [lang, setLangState] = useState<Lang>(detect);
   const { settings } = useStore();
   const overrides = settings.translations?.[lang];
+  const [auto, setAuto] = useState<Record<string, string>>({});
+  useEffect(() => {
+    if (lang === 'en') { setAuto({}); return undefined; }
+    const ck = 'autoTx.' + lang;
+    try { const c = localStorage.getItem(ck); setAuto(c ? JSON.parse(c) : {}); } catch { setAuto({}); }
+    return onSnapshot(
+      doc(db, 'translations', lang),
+      (s) => {
+        const m = (s.data() as { m?: Record<string, string> } | undefined)?.m ?? {};
+        setAuto(m);
+        try { localStorage.setItem(ck, JSON.stringify(m)); } catch { /* storage full */ }
+      },
+      () => undefined,
+    );
+  }, [lang]);
 
   useEffect(() => {
     document.documentElement.lang = lang;
@@ -125,8 +142,8 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   );
 
   const tx = useCallback(
-    (text: string) => (text && overrides?.[textKey(text)]) || text,
-    [overrides],
+    (text: string) => (text && (overrides?.[textKey(text)] || auto[textKey(text)])) || text,
+    [overrides, auto],
   );
 
   const value = useMemo(() => ({ lang, setLang, t, tx }), [lang, setLang, t, tx]);
