@@ -103,10 +103,10 @@ const StoreLayout: React.FC = () => {
 
 const App: React.FC = () => (
   <BrowserRouter>
-    <LanguageProvider><ToastProvider>
+    <ToastProvider>
       <AuthProvider>
         <StoreProvider>
-          <CartProvider>
+          <LanguageProvider><CartProvider>
             <ScrollToTop />
             <ErrorBoundary>
             <React.Suspense fallback={<PageLoader />}>
@@ -152,10 +152,10 @@ const App: React.FC = () => (
             </Routes>
             </React.Suspense>
             </ErrorBoundary>
-          </CartProvider>
+          </CartProvider></LanguageProvider>
         </StoreProvider>
       </AuthProvider>
-    </ToastProvider></LanguageProvider>
+    </ToastProvider>
   </BrowserRouter>
 );
 

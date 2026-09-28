@@ -20,11 +20,12 @@ const LINKS = [
 const AnnouncementBar: React.FC = () => {
   const { settings } = useStore();
   const a = settings.announcement;
+  const { tx } = useI18n();
   if (!a.enabled || !a.text) return null;
   return (
     <div className="overflow-hidden py-2 text-center" style={{ background: a.bg, color: a.color }}>
       <Link to={a.link || '/shop'} className="text-[11px] font-semibold tracking-[0.12em] sm:tracking-[0.2em]">
-        {a.text}
+        {tx(a.text)}
       </Link>
     </div>
   );
@@ -32,7 +33,7 @@ const AnnouncementBar: React.FC = () => {
 
 const Navbar: React.FC = () => {
   const { settings, categories } = useStore();
-  const { t } = useI18n();
+  const { t, tx } = useI18n();
   const { count, setOpen } = useCart();
   const [menu, setMenu] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -211,7 +212,7 @@ const Navbar: React.FC = () => {
               {categories.length > 0 && (
                 <>
                   <p className="mt-6 px-4 text-[11px] font-bold uppercase tracking-[0.2em] text-ink-400">
-                    Categories
+                    {t('nav.categories')}
                   </p>
                   {categories.slice(0, 10).map((c) => (
                     <Link
@@ -220,7 +221,7 @@ const Navbar: React.FC = () => {
                       onClick={() => setMenu(false)}
                       className="block rounded-xl px-4 py-3 text-sm text-ink-600 transition hover:bg-ink-50"
                     >
-                      {c.name}
+                      {tx(c.name)}
                     </Link>
                   ))}
                 </>

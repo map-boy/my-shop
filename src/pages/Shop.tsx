@@ -6,6 +6,7 @@ import { useStore } from '../context/StoreContext';
 import ProductCard, { ProductCardSkeleton } from '../components/ProductCard';
 import { Button, EmptyState, Select } from '../components/ui';
 import { cn } from '../lib/utils';
+import { useI18n } from '../lib/i18n';
 
 type Sort = 'newest' | 'popular' | 'price-asc' | 'price-desc' | 'name';
 
@@ -17,10 +18,19 @@ const SORTS: { value: Sort; label: string }[] = [
   { value: 'name', label: 'Name A–Z' },
 ];
 
+const SORT_KEYS: Record<string, string> = {
+  newest: 'sort.newest',
+  popular: 'sort.popular',
+  'price-asc': 'sort.priceAsc',
+  'price-desc': 'sort.priceDesc',
+  name: 'sort.name',
+};
+
 const Shop: React.FC = () => {
   const { liveProducts, categories, loading, money, settings } = useStore();
   const [params, setParams] = useSearchParams();
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const { t, tx } = useI18n();
 
   const q = params.get('q') ?? '';
   const category = params.get('category') ?? '';
@@ -77,7 +87,7 @@ const Shop: React.FC = () => {
   const Filters = (
     <div className="space-y-8">
       <div>
-        <p className="label">Category</p>
+        <p className="label">{t('shop.category')}</p>
         <div className="space-y-1">
           <button
             onClick={() => patch({ category: null })}
@@ -86,7 +96,7 @@ const Shop: React.FC = () => {
               !category ? 'bg-ink-900 font-semibold text-white' : 'text-ink-600 hover:bg-ink-100',
             )}
           >
-            All products
+            {t('shop.all')}
           </button>
           {categories.map((c) => (
             <button
@@ -97,7 +107,7 @@ const Shop: React.FC = () => {
                 category === c.id ? 'bg-ink-900 font-semibold text-white' : 'text-ink-600 hover:bg-ink-100',
               )}
             >
-              {c.name}
+              {tx(c.name)}
               <span className="text-xs opacity-60">
                 {liveProducts.filter((p) => p.categoryId === c.id).length}
               </span>
@@ -107,7 +117,7 @@ const Shop: React.FC = () => {
       </div>
 
       <div>
-        <p className="label">Max price</p>
+        <p className="label">{t('shop.maxPrice')}</p>
         <input
           type="range"
           min={0}
@@ -120,7 +130,7 @@ const Shop: React.FC = () => {
           className="w-full accent-[var(--accent)]"
         />
         <p className="mt-2 text-xs text-ink-500">
-          Up to <strong className="text-ink-900">{money(maxPrice || priceCeiling)}</strong>
+          <strong className="text-ink-900">{t('shop.upTo', { amount: money(maxPrice || priceCeiling) })}</strong>
         </p>
       </div>
 
@@ -132,7 +142,7 @@ const Shop: React.FC = () => {
             onChange={(e) => patch({ sale: e.target.checked ? '1' : null })}
             className="h-4 w-4 accent-[var(--accent)]"
           />
-          On sale only
+          {t('shop.onSale')}
         </label>
         <label className="flex cursor-pointer items-center gap-3 text-sm text-ink-700">
           <input
@@ -141,13 +151,13 @@ const Shop: React.FC = () => {
             onChange={(e) => patch({ stock: e.target.checked ? '1' : null })}
             className="h-4 w-4 accent-[var(--accent)]"
           />
-          In stock only
+          {t('shop.inStockOnly')}
         </label>
       </div>
 
       {activeCount > 0 && (
         <Button variant="outline" full onClick={() => setParams({}, { replace: true })}>
-          Clear filters
+          {t('shop.clear')}
         </Button>
       )}
     </div>
@@ -157,11 +167,11 @@ const Shop: React.FC = () => {
     <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16">
       <header className="mb-10">
         <h1 className="font-display text-4xl font-bold sm:text-5xl">
-          {q ? `Results for “${q}”` : category ? categories.find((c) => c.id === category)?.name ?? 'Shop' : 'All products'}
+          {q ? t('shop.results', { q }) : category ? tx(categories.find((c) => c.id === category)?.name ?? t('nav.shop')) : t('shop.all')}
         </h1>
         <p className="mt-3 text-sm text-ink-500">
-          {loading ? 'Loading the catalogue…' : `${results.length} ${results.length === 1 ? 'product' : 'products'}`}
-          {settings.shipping.freeOver > 0 && ` · Free delivery over ${money(settings.shipping.freeOver)}`}
+          {loading ? t('shop.loading') : results.length === 1 ? t('shop.count1') : t('shop.count', { n: results.length })}
+          {settings.shipping.freeOver > 0 && ` \u00B7 ${t('shop.freeDelivery', { amount: money(settings.shipping.freeOver) })}`}
         </p>
       </header>
 
@@ -173,12 +183,12 @@ const Shop: React.FC = () => {
           onClick={() => setFiltersOpen(true)}
           className="lg:hidden"
         >
-          Filters {activeCount > 0 && `(${activeCount})`}
+          {t('shop.filters')} {activeCount > 0 && `(${activeCount})`}
         </Button>
         <div className="ml-auto w-48">
-          <Select value={sort} onChange={(e) => patch({ sort: e.target.value })} aria-label="Sort products">
+          <Select value={sort} onChange={(e) => patch({ sort: e.target.value })} aria-label={t('shop.sortLabel')}>
             {SORTS.map((s) => (
-              <option key={s.value} value={s.value}>{s.label}</option>
+              <option key={s.value} value={s.value}>{t(SORT_KEYS[s.value])}</option>
             ))}
           </Select>
         </div>
@@ -201,9 +211,9 @@ const Shop: React.FC = () => {
           ) : (
             <EmptyState
               icon={<PackageOpen size={40} />}
-              title="Nothing matched"
-              text="Try a different search term or clear the filters."
-              action={<Button onClick={() => setParams({}, { replace: true })}>Clear filters</Button>}
+              title={t('shop.nothing')}
+              text={t('shop.nothingText')}
+              action={<Button onClick={() => setParams({}, { replace: true })}>{t('shop.clear')}</Button>}
             />
           )}
         </div>
@@ -214,7 +224,7 @@ const Shop: React.FC = () => {
           <div className="absolute inset-0 animate-fade-in bg-black/50" onClick={() => setFiltersOpen(false)} />
           <div className="animate-slide-in absolute right-0 top-0 h-full w-[85%] max-w-sm overflow-y-auto bg-white">
             <div className="sticky top-0 flex items-center justify-between border-b border-ink-200 bg-white px-5 py-4">
-              <span className="font-display text-lg font-bold">Filters</span>
+              <span className="font-display text-lg font-bold">{t('shop.filters')}</span>
               <button onClick={() => setFiltersOpen(false)} className="rounded-lg p-2 hover:bg-ink-100" aria-label="Close filters">
                 <X size={19} />
               </button>

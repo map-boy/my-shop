@@ -24,7 +24,7 @@ const ProductDetail: React.FC = () => {
   const { add, setOpen } = useCart();
   const toast = useToast();
   const navigate = useNavigate();
-  const { t: tr } = useI18n();
+  const { t: tr, tx } = useI18n();
 
   const [qty, setQty] = useState(1);
   const [choices, setChoices] = useState<Record<string, string>>({});
@@ -160,7 +160,7 @@ const ProductDetail: React.FC = () => {
           <>
             <ChevronRight size={13} />
             <Link to={`/shop?category=${product.categoryId}`} className="hover:text-ink-900">
-              {product.categoryName}
+              {tx(product.categoryName)}
             </Link>
           </>
         )}
@@ -191,10 +191,10 @@ const ProductDetail: React.FC = () => {
         <div>
           {product.categoryName && (
             <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-accent">
-              {product.categoryName}
+              {tx(product.categoryName)}
             </p>
           )}
-          <h1 className="mt-3 font-display text-3xl font-bold leading-tight sm:text-4xl">{product.name}</h1>
+          <h1 className="mt-3 font-display text-3xl font-bold leading-tight sm:text-4xl">{tx(product.name)}</h1>
 
           {product.reviewCount > 0 && (
             <div className="mt-4 flex items-center gap-2">
@@ -226,7 +226,7 @@ const ProductDetail: React.FC = () => {
           </div>
 
           {product.shortDescription && (
-            <p className="mt-6 text-[15px] leading-relaxed text-ink-600">{product.shortDescription}</p>
+            <p className="mt-6 text-[15px] leading-relaxed text-ink-600">{tx(product.shortDescription)}</p>
           )}
 
           {product.options?.filter((o) => o.values.length).map((opt) => (
@@ -389,10 +389,10 @@ const ProductDetail: React.FC = () => {
 
         <div className="max-w-3xl py-8 text-[15px] leading-relaxed text-ink-600">
           {tab === 'description' ? (
-            <p className="whitespace-pre-line">{product.description || 'No description has been added yet.'}</p>
+            <p className="whitespace-pre-line">{tx(product.description || 'No description has been added yet.')}</p>
           ) : (
             <div className="space-y-4">
-              <p>{settings.shipping.note}</p>
+              <p>{tx(settings.shipping.note)}</p>
               <p>
                 {settings.shipping.freeOver > 0
                   ? `Orders over ${money(settings.shipping.freeOver)} ship free. Below that a flat fee of ${money(settings.shipping.flatRate)} applies.`

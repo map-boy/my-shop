@@ -7,6 +7,7 @@ import {
   CategoryGrid, Hero, Newsletter, ProductRail, Promo, Testimonials, ValueProps,
 } from '../components/HomeSections';
 import { Button, EmptyState } from '../components/ui';
+import { useI18n } from '../lib/i18n';
 
 /**
  * The home page renders whatever sections the administrator has enabled, in the
@@ -14,6 +15,7 @@ import { Button, EmptyState } from '../components/ui';
  */
 const Home: React.FC = () => {
   const { settings, liveProducts, loading } = useStore();
+  const { tx } = useI18n();
 
   const byFlag = (flag: 'featured' | 'newArrival' | 'bestSeller', limit: number) => {
     const flagged = liveProducts.filter((p) => p[flag]);
@@ -28,9 +30,9 @@ const Home: React.FC = () => {
     featured: settings.featuredSection.enabled ? (
       <ProductRail
         key="featured"
-        eyebrow="Curated"
-        title={settings.featuredSection.title}
-        subtitle={settings.featuredSection.subtitle}
+        eyebrow={tx('Curated')}
+        title={tx(settings.featuredSection.title)}
+        subtitle={tx(settings.featuredSection.subtitle)}
         products={byFlag('featured', settings.featuredSection.limit)}
         loading={loading}
       />
@@ -39,9 +41,9 @@ const Home: React.FC = () => {
     newArrivals: settings.newArrivalsSection.enabled ? (
       <ProductRail
         key="newArrivals"
-        eyebrow="Just in"
-        title={settings.newArrivalsSection.title}
-        subtitle={settings.newArrivalsSection.subtitle}
+        eyebrow={tx('Just in')}
+        title={tx(settings.newArrivalsSection.title)}
+        subtitle={tx(settings.newArrivalsSection.subtitle)}
         products={byFlag('newArrival', settings.newArrivalsSection.limit)}
         loading={loading}
         viewAllHref="/shop?sort=newest"
@@ -52,9 +54,9 @@ const Home: React.FC = () => {
     bestSellers: settings.bestSellersSection.enabled ? (
       <ProductRail
         key="bestSellers"
-        eyebrow="Popular"
-        title={settings.bestSellersSection.title}
-        subtitle={settings.bestSellersSection.subtitle}
+        eyebrow={tx('Popular')}
+        title={tx(settings.bestSellersSection.title)}
+        subtitle={tx(settings.bestSellersSection.subtitle)}
         products={byFlag('bestSeller', settings.bestSellersSection.limit)}
         loading={loading}
         viewAllHref="/shop?sort=popular"

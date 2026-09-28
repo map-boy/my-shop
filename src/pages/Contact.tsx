@@ -7,10 +7,12 @@ import { useStore } from '../context/StoreContext';
 import { useToast } from '../context/ToastContext';
 import { Button, Field, Input, Textarea } from '../components/ui';
 import { errorMessage } from '../lib/utils';
+import { useI18n } from '../lib/i18n';
 
 const Contact: React.FC = () => {
   const { settings } = useStore();
   const toast = useToast();
+  const { t } = useI18n();
   const [form, setForm] = useState({ name: '', email: '', phone: '', subject: '', body: '' });
   const [busy, setBusy] = useState(false);
 
@@ -20,7 +22,7 @@ const Contact: React.FC = () => {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name.trim() || !form.email.includes('@') || !form.body.trim()) {
-      return toast.error('Please fill in your name, e-mail and message.');
+      return toast.error(t('contact.fill'));
     }
     setBusy(true);
     try {
@@ -31,7 +33,7 @@ const Contact: React.FC = () => {
         createdAt: Date.now(),
       });
       setForm({ name: '', email: '', phone: '', subject: '', body: '' });
-      toast.success('Message sent — we usually reply within a few hours.');
+      toast.success(t('contact.sent'));
     } catch (err) {
       toast.error(errorMessage(err));
     } finally {
@@ -40,20 +42,19 @@ const Contact: React.FC = () => {
   };
 
   const details = [
-    settings.contact.phone && { icon: Phone, label: 'Call us', value: settings.contact.phone, href: `tel:${settings.contact.phone}` },
-    settings.contact.email && { icon: Mail, label: 'E-mail', value: settings.contact.email, href: `mailto:${settings.contact.email}` },
-    settings.contact.address && { icon: MapPin, label: 'Visit', value: settings.contact.address, href: settings.contact.mapUrl },
-    settings.contact.hours && { icon: Clock, label: 'Open', value: settings.contact.hours, href: '' },
+    settings.contact.phone && { icon: Phone, label: t('contact.call'), value: settings.contact.phone, href: `tel:${settings.contact.phone}` },
+    settings.contact.email && { icon: Mail, label: t('contact.email'), value: settings.contact.email, href: `mailto:${settings.contact.email}` },
+    settings.contact.address && { icon: MapPin, label: t('contact.visit'), value: settings.contact.address, href: settings.contact.mapUrl },
+    settings.contact.hours && { icon: Clock, label: t('contact.open'), value: settings.contact.hours, href: '' },
   ].filter(Boolean) as { icon: any; label: string; value: string; href: string }[];
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16">
       <header className="mb-12 max-w-2xl">
-        <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.3em] text-accent">Contact</p>
-        <h1 className="font-display text-4xl font-bold sm:text-5xl">We would love to hear from you</h1>
+        <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.3em] text-accent">{t('contact.eyebrow')}</p>
+        <h1 className="font-display text-4xl font-bold sm:text-5xl">{t('contact.title')}</h1>
         <p className="mt-4 text-[15px] leading-relaxed text-ink-500">
-          Questions about an order, a product or a bulk request — send a note and a real person will answer.
-        </p>
+          {t('contact.intro')}</p>
       </header>
 
       <div className="grid gap-12 lg:grid-cols-[1fr_1.3fr]">
@@ -84,31 +85,31 @@ const Contact: React.FC = () => {
               className="flex items-center gap-4 rounded-brand bg-brand p-5 transition hover:opacity-90"
             >
               <MessageSquare size={20} />
-              <span className="text-sm font-bold uppercase tracking-[0.1em]">Chat on WhatsApp</span>
+              <span className="text-sm font-bold uppercase tracking-[0.1em]">{t('contact.chat')}</span>
             </a>
           )}
         </div>
 
         <form onSubmit={submit} className="rounded-brand border border-ink-200 p-6 sm:p-8">
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Your name" required>
+            <Field label={t('contact.name')} required>
               <Input value={form.name} onChange={set('name')} placeholder="Jane Doe" />
             </Field>
-            <Field label="E-mail" required>
+            <Field label={t('contact.email')} required>
               <Input type="email" value={form.email} onChange={set('email')} placeholder="jane@example.com" />
             </Field>
-            <Field label="Phone">
+            <Field label={t('contact.phone')}>
               <Input value={form.phone} onChange={set('phone')} placeholder="+250 7…" />
             </Field>
-            <Field label="Subject">
-              <Input value={form.subject} onChange={set('subject')} placeholder="Order question" />
+            <Field label={t('contact.subject')}>
+              <Input value={form.subject} onChange={set('subject')} placeholder={t('contact.subjectPh')} />
             </Field>
-            <Field label="Message" required className="sm:col-span-2">
-              <Textarea value={form.body} onChange={set('body')} placeholder="How can we help?" className="min-h-40" />
+            <Field label={t('contact.message')} required className="sm:col-span-2">
+              <Textarea value={form.body} onChange={set('body')} placeholder={t('contact.messagePh')} className="min-h-40" />
             </Field>
           </div>
           <Button type="submit" size="lg" className="mt-6" loading={busy} icon={<Send size={16} />}>
-            Send message
+            {t('contact.send')}
           </Button>
         </form>
       </div>
@@ -116,7 +117,7 @@ const Contact: React.FC = () => {
       {settings.contact.mapUrl && (
         <div className="mt-14 overflow-hidden rounded-brand border border-ink-200">
           <iframe
-            title="Our location"
+            title={t('contact.location')}
             src={settings.contact.mapUrl}
             loading="lazy"
             className="h-[360px] w-full border-0"

@@ -169,6 +169,7 @@ export const DEFAULT_SETTINGS: StoreSettings = {
   },
   checkout: { requirePhone: true, allowNotes: true, minOrder: 0 },
   whatsappOnly: true,
+  translations: {},
 
   contact: {
     phone: '+250 780 867 473',
@@ -233,7 +234,9 @@ export const DEFAULT_SETTINGS: StoreSettings = {
 
 /** Deep-merges saved settings over the defaults so new fields never break an old document. */
 export function mergeSettings(saved: Partial<StoreSettings> | undefined | null): StoreSettings {
-  return deepMerge(DEFAULT_SETTINGS, saved ?? {}) as StoreSettings;
+  const merged = deepMerge(DEFAULT_SETTINGS, saved ?? {}) as StoreSettings;
+  merged.translations = (saved as Partial<StoreSettings> | undefined | null)?.translations ?? {};
+  return merged;
 }
 
 function deepMerge<T>(base: T, patch: any): T {

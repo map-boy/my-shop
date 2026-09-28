@@ -7,6 +7,7 @@ import { db } from '../lib/firebase';
 import { useStore } from '../context/StoreContext';
 import { useToast } from '../context/ToastContext';
 import { Button } from './ui';
+import { useI18n } from '../lib/i18n';
 
 const SOCIAL_ICONS = {
   facebook: Facebook,
@@ -19,19 +20,20 @@ const SOCIAL_ICONS = {
 const Footer: React.FC = () => {
   const { settings } = useStore();
   const toast = useToast();
+  const { t, tx } = useI18n();
   const [email, setEmail] = useState('');
   const [busy, setBusy] = useState(false);
 
   const subscribe = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.includes('@')) return toast.error('Enter a valid e-mail address.');
+    if (!email.includes('@')) return toast.error(t('footer.invalid'));
     setBusy(true);
     try {
       await addDoc(collection(db, 'subscribers'), { email: email.toLowerCase(), createdAt: Date.now() });
       setEmail('');
-      toast.success('You are on the list. Talk soon!');
+      toast.success(t('footer.subscribed'));
     } catch {
-      toast.error('Could not subscribe right now.');
+      toast.error(t('footer.fail'));
     } finally {
       setBusy(false);
     }
@@ -55,7 +57,7 @@ const Footer: React.FC = () => {
               )}
               <span className="font-display text-xl font-bold text-white">{settings.storeName}</span>
             </div>
-            <p className="max-w-sm text-sm leading-relaxed text-ink-400">{settings.footer.about}</p>
+            <p className="max-w-sm text-sm leading-relaxed text-ink-400">{tx(settings.footer.about)}</p>
 
             {socials.length > 0 && (
               <div className="mt-7 flex flex-wrap gap-2.5">
@@ -81,17 +83,17 @@ const Footer: React.FC = () => {
           {/* Link columns */}
           {settings.footer.columns.slice(0, 2).map((col) => (
             <div key={col.title}>
-              <h4 className="mb-5 text-[11px] font-bold uppercase tracking-[0.24em] text-white">{col.title}</h4>
+              <h4 className="mb-5 text-[11px] font-bold uppercase tracking-[0.24em] text-white">{tx(col.title)}</h4>
               <ul className="space-y-3">
                 {col.links.map((l) => (
                   <li key={`${l.label}-${l.href}`}>
                     {l.href.startsWith('http') ? (
                       <a href={l.href} target="_blank" rel="noreferrer" className="text-sm text-ink-400 transition hover:text-accent">
-                        {l.label}
+                        {tx(l.label)}
                       </a>
                     ) : (
                       <Link to={l.href} className="text-sm text-ink-400 transition hover:text-accent">
-                        {l.label}
+                        {tx(l.label)}
                       </Link>
                     )}
                   </li>
@@ -102,7 +104,7 @@ const Footer: React.FC = () => {
 
           {/* Contact + newsletter */}
           <div>
-            <h4 className="mb-5 text-[11px] font-bold uppercase tracking-[0.24em] text-white">Get in touch</h4>
+            <h4 className="mb-5 text-[11px] font-bold uppercase tracking-[0.24em] text-white">{t('footer.touch')}</h4>
             <ul className="space-y-3.5 text-sm text-ink-400">
               {settings.contact.phone && (
                 <li className="flex items-start gap-3">
@@ -133,20 +135,20 @@ const Footer: React.FC = () => {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="Your e-mail"
+                placeholder={t('footer.email')}
                 className="h-11 min-w-0 flex-1 rounded-xl border border-white/10 bg-white/5 px-4 text-sm text-white outline-none placeholder:text-ink-500 focus:border-accent"
               />
               <Button type="submit" variant="accent" loading={busy} className="shrink-0">
-                Join
+                {t('footer.join')}
               </Button>
             </form>
           </div>
         </div>
 
         <div className="mt-14 flex flex-col gap-4 border-t border-white/10 pt-8 text-xs text-ink-500 sm:flex-row sm:items-center sm:justify-between">
-          <p>{settings.footer.copyright}</p>
+          <p>{tx(settings.footer.copyright)}</p>
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-            <span>{settings.footer.paymentNote}</span>
+            <span>{tx(settings.footer.paymentNote)}</span>
             <Link to="/admin" className="inline-flex items-center gap-1.5 transition hover:text-accent">
               <Lock size={12} /> Admin
             </Link>

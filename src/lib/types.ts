@@ -302,6 +302,8 @@ export interface StoreSettings {
   checkout: { requirePhone: boolean; allowNotes: boolean; minOrder: number };
   /** true = no cart/checkout; shoppers order by WhatsApp. */
   whatsappOnly: boolean;
+  /** Admin-edited translations: language -> key -> text. Empty string = use the built-in text. */
+  translations: Record<string, Record<string, string>>;
 
   /* Contact & social */
   contact: { phone: string; whatsapp: string; email: string; address: string; hours: string; mapUrl: string };

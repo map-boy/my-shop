@@ -6,6 +6,7 @@ import type { Product } from '../lib/types';
 import { useStore } from '../context/StoreContext';
 import { useCart } from '../context/CartContext';
 import { cn, discountPercent, PLACEHOLDER_IMAGE } from '../lib/utils';
+import { useI18n } from '../lib/i18n';
 
 interface Props {
   product: Product;
@@ -15,6 +16,7 @@ interface Props {
 const ProductCard: React.FC<Props> = ({ product, className }) => {
   const { money, settings } = useStore();
   const { add } = useCart();
+  const { t, tx } = useI18n();
 
   const off = discountPercent(product.price, product.compareAtPrice);
   const soldOut = product.trackStock && product.stock <= 0;
@@ -52,12 +54,12 @@ const ProductCard: React.FC<Props> = ({ product, className }) => {
           )}
           {product.newArrival && !off && (
             <span className="rounded-full bg-brand px-2.5 py-1 text-[10px] font-black uppercase tracking-wider">
-              New
+              {t('badge.new')}
             </span>
           )}
           {product.bestSeller && (
             <span className="rounded-full bg-accent px-2.5 py-1 text-[10px] font-black uppercase tracking-wider">
-              Best seller
+              {t('badge.best')}
             </span>
           )}
         </div>
@@ -65,7 +67,7 @@ const ProductCard: React.FC<Props> = ({ product, className }) => {
         {soldOut && (
           <div className="absolute inset-0 flex items-center justify-center">
             <span className="rounded-full bg-ink-950/85 px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-white">
-              Sold out
+              {t('soldOut')}
             </span>
           </div>
         )}
@@ -84,11 +86,11 @@ const ProductCard: React.FC<Props> = ({ product, className }) => {
       <div className="flex flex-1 flex-col pt-4">
         {product.categoryName && (
           <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-ink-400">
-            {product.categoryName}
+            {tx(product.categoryName)}
           </p>
         )}
         <h3 className="mt-1.5 line-clamp-2 text-[15px] font-semibold leading-snug text-ink-900 transition-colors group-hover:text-accent">
-          {product.name}
+          {tx(product.name)}
         </h3>
 
         {product.reviewCount > 0 && (

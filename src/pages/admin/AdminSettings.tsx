@@ -1,16 +1,17 @@
 // FILE: src/pages/admin/AdminSettings.tsx
 import React, { useState } from 'react';
 import {
-  CreditCard, Globe, Palette, Phone, Search as SearchIcon, Share2, ShoppingBag, Store, TriangleAlert, Truck,
+  CreditCard, Globe, Languages, Palette, Phone, Search as SearchIcon, Share2, ShoppingBag, Store, TriangleAlert, Truck,
 } from 'lucide-react';
 import { useSettingsDraft } from '../../hooks/useSettingsDraft';
 import { useStore } from '../../context/StoreContext';
 import ImageInput from '../../components/ImageInput';
 import SaveBar from '../../components/SaveBar';
+import TranslationsPanel from './TranslationsPanel';
 import { Field, Input, Select, Textarea, Toggle } from '../../components/ui';
 import { cn } from '../../lib/utils';
 
-type Tab = 'identity' | 'theme' | 'commerce' | 'payments' | 'contact' | 'social' | 'footer' | 'seo' | 'advanced';
+type Tab = 'identity' | 'theme' | 'commerce' | 'payments' | 'contact' | 'social' | 'footer' | 'seo' | 'languages' | 'advanced';
 
 const TABS: { id: Tab; label: string; icon: React.ComponentType<{ size?: number; className?: string }> }[] = [
   { id: 'identity', label: 'Store identity', icon: Store },
@@ -21,6 +22,7 @@ const TABS: { id: Tab; label: string; icon: React.ComponentType<{ size?: number;
   { id: 'social', label: 'Social links', icon: Share2 },
   { id: 'footer', label: 'Footer', icon: Globe },
   { id: 'seo', label: 'SEO', icon: SearchIcon },
+  { id: 'languages', label: 'Languages & text', icon: Languages },
   { id: 'advanced', label: 'Advanced', icon: TriangleAlert },
 ];
 
@@ -533,6 +535,19 @@ const AdminSettings: React.FC = () => {
                 folder="brand"
                 label="Share image"
                 hint="Shown when a link to the shop is posted on social media. 1200 × 630 is ideal."
+              />
+            </Panel>
+          )}
+
+          {tab === 'languages' && (
+            <Panel
+              title="Languages & text"
+              description="Translate the shop into English, French, Arabic and Kinyarwanda. Visitors get their browser language automatically and can switch from the menu."
+            >
+              <TranslationsPanel
+                draft={draft}
+                value={draft.translations ?? {}}
+                onChange={(v) => set('translations', v)}
               />
             </Panel>
           )}

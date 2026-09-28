@@ -25,6 +25,9 @@ const Checkout: React.FC = () => {
   const { money, settings } = useStore();
   const toast = useToast();
   const navigate = useNavigate();
+  React.useEffect(() => {
+    if (settings.whatsappOnly) navigate('/shop', { replace: true });
+  }, [settings.whatsappOnly, navigate]);
 
   const [form, setForm] = useState<Form>({ name: '', email: '', phone: '', address: '', city: '', notes: '' });
   const [payment, setPayment] = useState('');

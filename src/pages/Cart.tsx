@@ -11,6 +11,9 @@ const Cart: React.FC = () => {
   const { lines, setQty, remove, subtotal, lineKey, clear } = useCart();
   const { money, settings } = useStore();
   const navigate = useNavigate();
+  React.useEffect(() => {
+    if (settings.whatsappOnly) navigate('/shop', { replace: true });
+  }, [settings.whatsappOnly, navigate]);
 
   const shipping =
     !settings.shipping.enabled || (settings.shipping.freeOver > 0 && subtotal >= settings.shipping.freeOver)

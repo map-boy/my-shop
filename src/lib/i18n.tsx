@@ -1,4 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { EXTRA } from './i18n-extra';
+import { useStore } from '../context/StoreContext';
 
 export type Lang = 'en' | 'fr' | 'ar' | 'rw';
 
@@ -55,7 +57,22 @@ const rw: Dict = {
   waMessage: 'Muraho, nifuza gutumiza: {name} x{qty} - {price}',
 };
 
-const DICT: Record<Lang, Dict> = { en, fr, ar, rw };
+export const DICT: Record<Lang, Dict> = {
+  en: { ...en, ...EXTRA.en },
+  fr: { ...fr, ...EXTRA.fr },
+  ar: { ...ar, ...EXTRA.ar },
+  rw: { ...rw, ...EXTRA.rw },
+};
+
+/** Firestore-safe key for an interface string (no dots). */
+export const fsKey = (k: string) => k.replace(/\./g, '_');
+
+/** Stable key for admin-translated free text (banners, products, categories...). */
+export function textKey(text: string): string {
+  let h = 5381;
+  for (let i = 0; i < text.length; i++) h = ((h * 33) ^ text.charCodeAt(i)) >>> 0;
+  return 'h' + h.toString(36) + text.length.toString(36);
+}
 
 /** Saved choice > browser language > English. */
 function detect(): Lang {
@@ -76,12 +93,16 @@ interface I18n {
   lang: Lang;
   setLang: (l: Lang) => void;
   t: (key: string, vars?: Record<string, string | number>) => string;
+  /** Translates free text (banner, product name...) using the admin's translations; falls back to the text itself. */
+  tx: (text: string) => string;
 }
 
 const Ctx = createContext<I18n | undefined>(undefined);
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [lang, setLangState] = useState<Lang>(detect);
+  const { settings } = useStore();
+  const overrides = settings.translations?.[lang];
 
   useEffect(() => {
     document.documentElement.lang = lang;
@@ -95,14 +116,19 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const t = useCallback(
     (key: string, vars?: Record<string, string | number>) => {
-      let s = DICT[lang][key] ?? DICT.en[key] ?? key;
+      let s = overrides?.[fsKey(key)] || DICT[lang][key] || DICT.en[key] || key;
       if (vars) for (const k of Object.keys(vars)) s = s.split('{' + k + '}').join(String(vars[k]));
       return s;
     },
-    [lang],
+    [lang, overrides],
   );
 
-  const value = useMemo(() => ({ lang, setLang, t }), [lang, setLang, t]);
+  const tx = useCallback(
+    (text: string) => (text && overrides?.[textKey(text)]) || text,
+    [overrides],
+  );
+
+  const value = useMemo(() => ({ lang, setLang, t, tx }), [lang, setLang, t, tx]);
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 };
 
