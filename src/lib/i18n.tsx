@@ -1,6 +1,9 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { EXTRA } from './i18n-extra';
 import { MORE } from './i18n-more';
+import { PAGES } from './i18n-pages';
+import { SEED } from './i18n-seed';
+import { setDateLocale } from './utils';
 import { useStore } from '../context/StoreContext';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from './firebase';
@@ -61,10 +64,10 @@ const rw: Dict = {
 };
 
 export const DICT: Record<Lang, Dict> = {
-  en: { ...en, ...EXTRA.en, ...MORE.en },
-  fr: { ...fr, ...EXTRA.fr, ...MORE.fr },
-  ar: { ...ar, ...EXTRA.ar, ...MORE.ar },
-  rw: { ...rw, ...EXTRA.rw, ...MORE.rw },
+  en: { ...en, ...EXTRA.en, ...MORE.en, ...PAGES.en },
+  fr: { ...fr, ...EXTRA.fr, ...MORE.fr, ...PAGES.fr },
+  ar: { ...ar, ...EXTRA.ar, ...MORE.ar, ...PAGES.ar },
+  rw: { ...rw, ...EXTRA.rw, ...MORE.rw, ...PAGES.rw },
 };
 
 /** Firestore-safe key for an interface string (no dots). */
@@ -124,6 +127,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   useEffect(() => {
     document.documentElement.lang = lang;
+    setDateLocale({ en: 'en-GB', fr: 'fr-FR', ar: 'ar', rw: 'rw' }[lang]);
     document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
   }, [lang]);
 
@@ -142,9 +146,14 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   );
 
   const tx = useCallback(
-    (text: string) => (text && (overrides?.[textKey(text)] || auto[textKey(text)])) || text,
-    [overrides, auto],
+    (text: string) => (text && (overrides?.[textKey(text)] || SEED[lang]?.[text] || auto[textKey(text)])) || text,
+    [overrides, auto, lang],
   );
+
+  useEffect(() => {
+    const base = settings.seo?.title || settings.storeName;
+    if (base) document.title = tx(base);
+  }, [tx, settings.seo?.title, settings.storeName]);
 
   const value = useMemo(() => ({ lang, setLang, t, tx }), [lang, setLang, t, tx]);
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

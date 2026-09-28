@@ -1,3 +1,4 @@
+import { useI18n } from '../lib/i18n';
 // FILE: src/pages/OrderSuccess.tsx
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
@@ -15,6 +16,7 @@ const OrderSuccess: React.FC = () => {
   const location = useLocation();
   const { money, settings } = useStore();
   const toast = useToast();
+  const { t, tx } = useI18n();
 
   const passed = (location.state as { order?: Order } | null)?.order ?? null;
   const [order, setOrder] = useState<Order | null>(passed);
@@ -30,7 +32,7 @@ const OrderSuccess: React.FC = () => {
       .finally(() => setLoading(false));
   }, [id, passed]);
 
-  if (loading) return <PageLoader label="Loading your order" />;
+  if (loading) return <PageLoader label={t('x.loadingOrder')} />;
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6 sm:py-24">
@@ -38,9 +40,9 @@ const OrderSuccess: React.FC = () => {
         <span className="mx-auto mb-7 flex h-20 w-20 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
           <CheckCircle2 size={40} />
         </span>
-        <h1 className="font-display text-4xl font-bold sm:text-5xl">Thank you!</h1>
+        <h1 className="font-display text-4xl font-bold sm:text-5xl">{t('x.thanks')}</h1>
         <p className="mt-4 text-[15px] leading-relaxed text-ink-600">
-          Your order has been received. We will call or e-mail you shortly to confirm the delivery.
+          {t('x.received')}
         </p>
       </div>
 
@@ -52,14 +54,14 @@ const OrderSuccess: React.FC = () => {
           <div className="mt-10 rounded-brand border-2 border-accent bg-accent/5 p-6 sm:p-8">
             <h2 className="flex items-center gap-2.5 font-display text-xl font-bold">
               <Smartphone size={20} className="text-accent" />
-              Now complete your payment
+              {t('x.completePay')}
             </h2>
             <p className="mt-4 whitespace-pre-line text-[15px] leading-relaxed text-ink-700">
               {settings.payments.instructions}
             </p>
             {order && (
               <p className="mt-4 text-sm text-ink-600">
-                Amount to send: <strong className="text-ink-900">{money(order.total)}</strong> · Reference:{' '}
+                {t('x.amountSend')} <strong className="text-ink-900">{money(order.total)}</strong> · {t('x.reference')}:{' '}
                 <strong className="text-ink-900">{order.number}</strong>
               </p>
             )}
@@ -69,7 +71,7 @@ const OrderSuccess: React.FC = () => {
       <div className="mt-10 rounded-brand border border-ink-200 p-6 sm:p-8">
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-ink-200 pb-5">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-ink-400">Order reference</p>
+            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-ink-400">{t('x.orderRef')}</p>
             <p className="mt-1 font-display text-2xl font-bold">{order?.number ?? id.slice(0, 8).toUpperCase()}</p>
           </div>
           <div className="flex gap-2 no-print">
@@ -79,15 +81,15 @@ const OrderSuccess: React.FC = () => {
               icon={<Copy size={14} />}
               onClick={() => {
                 navigator.clipboard?.writeText(order?.number ?? id).then(
-                  () => toast.success('Reference copied.'),
-                  () => toast.error('Could not copy.'),
+                  () => toast.success(t('x.copied')),
+                  () => toast.error(t('x.copyFail')),
                 );
               }}
             >
-              Copy
+              {t('x.copy')}
             </Button>
             <Button variant="outline" size="sm" icon={<Printer size={14} />} onClick={() => window.print()}>
-              Print
+              {t('x.print')}
             </Button>
           </div>
         </div>
@@ -100,7 +102,7 @@ const OrderSuccess: React.FC = () => {
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold">{it.name}</p>
                     <p className="mt-0.5 text-xs text-ink-500">
-                      {it.variant ? `${it.variant} · ` : ''}Qty {it.qty}
+                      {it.variant ? `${it.variant} · ` : ''}{t('x.qty')} {it.qty}
                     </p>
                   </div>
                   <span className="shrink-0 text-sm font-bold">{money(it.price * it.qty)}</span>
@@ -109,51 +111,51 @@ const OrderSuccess: React.FC = () => {
             </ul>
 
             <dl className="space-y-2.5 border-t border-ink-200 pt-5 text-sm">
-              <div className="flex justify-between"><dt className="text-ink-600">Subtotal</dt><dd>{money(order.subtotal)}</dd></div>
+              <div className="flex justify-between"><dt className="text-ink-600">{t('x.subtotal')}</dt><dd>{money(order.subtotal)}</dd></div>
               {order.discount > 0 && (
-                <div className="flex justify-between text-emerald-600"><dt>Discount</dt><dd>−{money(order.discount)}</dd></div>
+                <div className="flex justify-between text-emerald-600"><dt>{t('x.discount')}</dt><dd>−{money(order.discount)}</dd></div>
               )}
-              <div className="flex justify-between"><dt className="text-ink-600">Delivery</dt><dd>{order.shipping === 0 ? 'Free' : money(order.shipping)}</dd></div>
+              <div className="flex justify-between"><dt className="text-ink-600">{t('x.delivery')}</dt><dd>{order.shipping === 0 ? t('x.free') : money(order.shipping)}</dd></div>
               {order.tax > 0 && (
-                <div className="flex justify-between"><dt className="text-ink-600">{settings.tax.label}</dt><dd>{money(order.tax)}</dd></div>
+                <div className="flex justify-between"><dt className="text-ink-600">{tx(settings.tax.label)}</dt><dd>{money(order.tax)}</dd></div>
               )}
               <div className="flex justify-between border-t border-ink-200 pt-3 text-lg font-bold">
-                <dt>Total</dt><dd>{money(order.total)}</dd>
+                <dt>{t('x.total')}</dt><dd>{money(order.total)}</dd>
               </div>
             </dl>
 
             <div className="mt-6 grid gap-4 border-t border-ink-200 pt-5 text-sm sm:grid-cols-2">
               <div>
-                <p className="label">Deliver to</p>
+                <p className="label">{t('x.deliverTo')}</p>
                 <p className="font-semibold">{order.customerName}</p>
                 <p className="text-ink-600">{order.address}{order.city ? `, ${order.city}` : ''}</p>
                 <p className="text-ink-600">{order.customerPhone}</p>
               </div>
               <div>
-                <p className="label">Payment</p>
+                <p className="label">{t('x.payment')}</p>
                 <p className="font-semibold">{order.paymentMethod}</p>
-                <p className="text-ink-600">Placed {formatDate(order.createdAt, true)}</p>
+                <p className="text-ink-600">{t('x.placed')} {formatDate(order.createdAt, true)}</p>
               </div>
             </div>
           </>
         ) : (
           <p className="py-6 text-sm text-ink-600">
-            Keep this reference safe — quote it when you contact us about this order.
+            {t('x.keepRef')}
           </p>
         )}
       </div>
 
       <div className="mt-10 flex flex-wrap justify-center gap-3 no-print">
-        <Link to="/shop"><Button size="lg">Keep shopping</Button></Link>
+        <Link to="/shop"><Button size="lg">{t('x.continue')}</Button></Link>
         {settings.contact.whatsapp && (
           <a
             href={`https://wa.me/${settings.contact.whatsapp.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(
-              `Hello, I just placed order ${order?.number ?? id}`,
+              `${t('x.waOrder')} ${order?.number ?? id}`,
             )}`}
             target="_blank"
             rel="noreferrer"
           >
-            <Button variant="outline" size="lg">Message us on WhatsApp</Button>
+            <Button variant="outline" size="lg">{t('x.msgWa')}</Button>
           </a>
         )}
       </div>

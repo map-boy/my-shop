@@ -76,7 +76,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     root.setProperty('--radius', `${settings.radius}px`);
     root.setProperty('--heading-font', settings.headingFont);
 
-    document.title = settings.seo.title || settings.storeName;
+    // document.title is set (translated) in LanguageProvider
     const meta = document.querySelector('meta[name="description"]');
     if (meta) meta.setAttribute('content', settings.seo.description);
   }, [settings]);

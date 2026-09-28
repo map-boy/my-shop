@@ -1,3 +1,4 @@
+import { useI18n } from '../lib/i18n';
 // FILE: src/pages/Checkout.tsx
 import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -24,6 +25,7 @@ const Checkout: React.FC = () => {
   const { lines, subtotal, clear } = useCart();
   const { money, settings } = useStore();
   const toast = useToast();
+  const { t, tx } = useI18n();
   const navigate = useNavigate();
   React.useEffect(() => {
     if (settings.whatsappOnly) navigate('/shop', { replace: true });
@@ -39,12 +41,12 @@ const Checkout: React.FC = () => {
   const methods = useMemo(() => {
     const p = settings.payments;
     return [
-      p.cod && { id: 'cod', label: 'Cash on delivery', hint: 'Pay the courier when your order arrives.' },
-      p.mobileMoney && { id: 'momo', label: 'Mobile Money', hint: settings.payments.instructions },
-      p.bank && { id: 'bank', label: 'Bank transfer', hint: 'We send account details after you order.' },
-      p.card && { id: 'card', label: 'Card', hint: 'A secure payment link is sent to your e-mail.' },
+      p.cod && { id: 'cod', label: t('x.cod'), hint: t('x.codHint') },
+      p.mobileMoney && { id: 'momo', label: t('x.momo'), hint: tx(settings.payments.instructions) },
+      p.bank && { id: 'bank', label: t('x.bank'), hint: t('x.bankHint') },
+      p.card && { id: 'card', label: t('x.card'), hint: t('x.cardHint') },
     ].filter(Boolean) as { id: string; label: string; hint: string }[];
-  }, [settings.payments]);
+  }, [settings.payments, t, tx]);
 
   const activeMethod = payment || methods[0]?.id || 'cod';
 
@@ -74,21 +76,21 @@ const Checkout: React.FC = () => {
       const snap = await getDoc(doc(db, 'coupons', code));
       if (!snap.exists()) {
         setCoupon(null);
-        return toast.error('That code does not exist.');
+        return toast.error(t('x.codeNone'));
       }
       const data = { id: snap.id, ...(snap.data() as Omit<Coupon, 'id'>) };
-      if (!data.active) { setCoupon(null); return toast.error('That code is no longer active.'); }
-      if (data.expiresAt && data.expiresAt < Date.now()) { setCoupon(null); return toast.error('That code has expired.'); }
+      if (!data.active) { setCoupon(null); return toast.error(t('x.codeInactive')); }
+      if (data.expiresAt && data.expiresAt < Date.now()) { setCoupon(null); return toast.error(t('x.codeExpired')); }
       if (data.minSubtotal && subtotal < data.minSubtotal) {
         setCoupon(null);
-        return toast.error(`Spend at least ${money(data.minSubtotal)} to use this code.`);
+        return toast.error(t('x.codeMin', { amount: money(data.minSubtotal) }));
       }
       if (data.usageLimit > 0 && data.used >= data.usageLimit) {
         setCoupon(null);
-        return toast.error('That code has been fully redeemed.');
+        return toast.error(t('x.codeUsed'));
       }
       setCoupon(data);
-      toast.success(`Code applied — ${data.type === 'percent' ? `${data.value}% off` : `${money(data.value)} off`}.`);
+      toast.success(t('x.codeOk', { off: data.type === 'percent' ? `${data.value}%` : money(data.value) }));
     } catch (err) {
       toast.error(errorMessage(err));
     } finally {
@@ -98,12 +100,12 @@ const Checkout: React.FC = () => {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name.trim()) return toast.error('Please enter your name.');
-    if (!form.email.includes('@')) return toast.error('Please enter a valid e-mail address.');
-    if (settings.checkout.requirePhone && !form.phone.trim()) return toast.error('Please enter a phone number.');
-    if (!form.address.trim()) return toast.error('Please enter a delivery address.');
+    if (!form.name.trim()) return toast.error(t('x.needName'));
+    if (!form.email.includes('@')) return toast.error(t('x.needEmail'));
+    if (settings.checkout.requirePhone && !form.phone.trim()) return toast.error(t('x.needPhone'));
+    if (!form.address.trim()) return toast.error(t('x.needAddr'));
     if (settings.checkout.minOrder > 0 && subtotal < settings.checkout.minOrder) {
-      return toast.error(`The minimum order is ${money(settings.checkout.minOrder)}.`);
+      return toast.error(t('x.minOrder', { amount: money(settings.checkout.minOrder) }));
     }
 
     setBusy(true);
@@ -137,7 +139,7 @@ const Checkout: React.FC = () => {
       address: form.address.trim(),
       city: form.city.trim(),
       notes: form.notes.trim(),
-      paymentMethod: methods.find((m) => m.id === activeMethod)?.label ?? activeMethod,
+      paymentMethod: ({ cod: 'Cash on delivery', momo: 'Mobile Money', bank: 'Bank transfer', card: 'Card' } as Record<string, string>)[activeMethod] ?? activeMethod,
       paymentStatus: 'unpaid',
       status: 'pending',
       timeline: [{ at: now, status: 'pending', by: 'customer', note: 'Order placed' }],
@@ -176,9 +178,9 @@ const Checkout: React.FC = () => {
       <div className="mx-auto max-w-2xl px-4 py-24 sm:px-6">
         <EmptyState
           icon={<ShoppingBag size={44} />}
-          title="Nothing to check out"
-          text="Add a product to your bag first."
-          action={<Button size="lg" onClick={() => navigate('/shop')}>Browse the shop</Button>}
+          title={t('x.emptyTitle')}
+          text={t('x.emptyText')}
+          action={<Button size="lg" onClick={() => navigate('/shop')}>{t('x.browse')}</Button>}
         />
       </div>
     );
@@ -189,41 +191,41 @@ const Checkout: React.FC = () => {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
-      <h1 className="font-display text-4xl font-bold sm:text-5xl">Checkout</h1>
+      <h1 className="font-display text-4xl font-bold sm:text-5xl">{t('x.checkout')}</h1>
       <p className="mt-3 flex items-center gap-2 text-sm text-ink-500">
-        <Lock size={14} /> Your details are only used to deliver this order.
+        <Lock size={14} /> {t('x.privacy')}
       </p>
 
       <form onSubmit={submit} className="mt-10 grid gap-10 lg:grid-cols-[1fr_23rem]">
         <div className="space-y-10">
           <section>
-            <h2 className="mb-5 font-display text-xl font-bold">Delivery details</h2>
+            <h2 className="mb-5 font-display text-xl font-bold">{t('x.delivDetails')}</h2>
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Full name" required>
+              <Field label={t('x.fullName')} required>
                 <Input value={form.name} onChange={set('name')} placeholder="Jane Doe" autoComplete="name" />
               </Field>
-              <Field label="E-mail" required>
+              <Field label={t('x.email')} required>
                 <Input type="email" value={form.email} onChange={set('email')} placeholder="jane@example.com" autoComplete="email" />
               </Field>
-              <Field label="Phone" required={settings.checkout.requirePhone}>
+              <Field label={t('x.phone')} required={settings.checkout.requirePhone}>
                 <Input value={form.phone} onChange={set('phone')} placeholder="+250 7…" autoComplete="tel" />
               </Field>
-              <Field label="City / town">
+              <Field label={t('x.city')}>
                 <Input value={form.city} onChange={set('city')} placeholder="Kigali" autoComplete="address-level2" />
               </Field>
-              <Field label="Delivery address" required className="sm:col-span-2">
-                <Input value={form.address} onChange={set('address')} placeholder="Street, house number, landmark" autoComplete="street-address" />
+              <Field label={t('x.address')} required className="sm:col-span-2">
+                <Input value={form.address} onChange={set('address')} placeholder={t('x.phAddr')} autoComplete="street-address" />
               </Field>
               {settings.checkout.allowNotes && (
-                <Field label="Order notes" hint="Anything the courier should know." className="sm:col-span-2">
-                  <Textarea value={form.notes} onChange={set('notes')} placeholder="Optional" />
+                <Field label={t('x.notes')} hint={t('x.notesHint')} className="sm:col-span-2">
+                  <Textarea value={form.notes} onChange={set('notes')} placeholder={t('x.optional')} />
                 </Field>
               )}
             </div>
           </section>
 
           <section>
-            <h2 className="mb-5 font-display text-xl font-bold">Payment</h2>
+            <h2 className="mb-5 font-display text-xl font-bold">{t('x.payment')}</h2>
             <div className="space-y-3">
               {methods.map((m) => (
                 <button
@@ -251,7 +253,7 @@ const Checkout: React.FC = () => {
               ))}
               {!methods.length && (
                 <p className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-800">
-                  No payment method is enabled. Please contact the shop to complete your order.
+                  {t('x.noPay')}
                 </p>
               )}
             </div>
@@ -261,7 +263,7 @@ const Checkout: React.FC = () => {
         {/* Summary */}
         <aside className="lg:sticky lg:top-28 lg:h-fit">
           <div className="rounded-brand border border-ink-200 p-6">
-            <h2 className="font-display text-xl font-bold">Your order</h2>
+            <h2 className="font-display text-xl font-bold">{t('x.yourOrder')}</h2>
 
             <ul className="mt-5 max-h-64 space-y-4 overflow-y-auto pr-1">
               {lines.map((l, i) => (
@@ -291,52 +293,52 @@ const Checkout: React.FC = () => {
                 <Input
                   value={couponCode}
                   onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                  placeholder="Discount code"
+                  placeholder={t('x.discountCode')}
                   className="h-11"
                 />
                 <Button type="button" variant="outline" onClick={applyCoupon} loading={checking} className="shrink-0">
-                  Apply
+                  {t('x.apply')}
                 </Button>
               </div>
               {coupon && (
                 <p className="mt-2.5 inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600">
-                  <BadgePercent size={13} /> {coupon.code} applied
+                  <BadgePercent size={13} /> {t('x.applied', { code: coupon.code })}
                 </p>
               )}
             </div>
 
             <dl className="mt-6 space-y-3 border-t border-ink-200 pt-5 text-sm">
               <div className="flex justify-between">
-                <dt className="text-ink-600">Subtotal</dt>
+                <dt className="text-ink-600">{t('x.subtotal')}</dt>
                 <dd className="font-semibold">{money(subtotal)}</dd>
               </div>
               {discount > 0 && (
                 <div className="flex justify-between text-emerald-600">
-                  <dt>Discount</dt>
+                  <dt>{t('x.discount')}</dt>
                   <dd className="font-semibold">−{money(discount)}</dd>
                 </div>
               )}
               <div className="flex justify-between">
-                <dt className="text-ink-600">Delivery</dt>
-                <dd className="font-semibold">{shipping === 0 ? 'Free' : money(shipping)}</dd>
+                <dt className="text-ink-600">{t('x.delivery')}</dt>
+                <dd className="font-semibold">{shipping === 0 ? t('x.free') : money(shipping)}</dd>
               </div>
               {tax > 0 && (
                 <div className="flex justify-between">
-                  <dt className="text-ink-600">{settings.tax.label} ({settings.tax.rate}%)</dt>
+                  <dt className="text-ink-600">{tx(settings.tax.label)} ({settings.tax.rate}%)</dt>
                   <dd className="font-semibold">{money(tax)}</dd>
                 </div>
               )}
               <div className="flex justify-between border-t border-ink-200 pt-3 text-lg">
-                <dt className="font-bold">Total</dt>
+                <dt className="font-bold">{t('x.total')}</dt>
                 <dd className="font-bold">{money(total)}</dd>
               </div>
             </dl>
 
             <Button type="submit" full size="lg" className="mt-7" loading={busy}>
-              Place order
+              {t('x.placeOrder')}
             </Button>
             <p className="mt-4 text-center text-[11px] leading-relaxed text-ink-500">
-              By placing this order you agree to be contacted about the delivery.
+              {t('x.agree')}
             </p>
           </div>
         </aside>

@@ -26,10 +26,13 @@ export function formatMoney(
   return position === 'before' ? `${symbol} ${body}` : `${body} ${symbol}`;
 }
 
+export let dateLocale = 'en-GB';
+export const setDateLocale = (l: string) => { dateLocale = l; };
+
 export function formatDate(ms: number, withTime = false): string {
   if (!ms) return '—';
   const d = new Date(ms);
-  return d.toLocaleDateString('en-GB', {
+  return d.toLocaleDateString(dateLocale, {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
