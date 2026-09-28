@@ -80,19 +80,32 @@ export function textKey(text: string): string {
   return 'h' + h.toString(36) + text.length.toString(36);
 }
 
-/** Saved choice > browser language > English. */
+const isLang = (v: unknown): v is Lang => v === 'en' || v === 'fr' || v === 'ar' || v === 'rw';
+
+function fromTag(tag: string): Lang | null {
+  const c = (tag || '').toLowerCase().split(/[-_]/)[0];
+  if (c === 'rw' || c === 'kin') return 'rw';
+  if (c === 'fr' || c === 'ar' || c === 'en') return c as Lang;
+  return null;
+}
+
+function isManual(): boolean {
+  try { return localStorage.getItem('langManual') === '1'; } catch { return false; }
+}
+
+/** Manual pick > browser/device language order > Kigali timezone (rw) > English. */
 function detect(): Lang {
   try {
     const saved = localStorage.getItem('lang');
-    if (saved === 'en' || saved === 'fr' || saved === 'ar' || saved === 'rw') return saved;
+    if (isManual() && isLang(saved)) return saved;
   } catch { /* storage blocked */ }
   const list = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language];
-  for (const l of list) {
-    const c = (l || '').toLowerCase().split('-')[0];
-    if (c === 'rw' || c === 'kin') return 'rw';
-    if (c === 'fr' || c === 'ar' || c === 'en') return c as Lang;
-  }
-  return 'en';
+  let first: Lang | null = null;
+  for (const l of list) { const c = fromTag(l); if (c) { first = c; break; } }
+  let tz = '';
+  try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch { /* ignore */ }
+  if ((!first || first === 'en') && tz === 'Africa/Kigali') return 'rw';
+  return first || 'en';
 }
 
 interface I18n {
@@ -133,7 +146,27 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const setLang = useCallback((l: Lang) => {
     setLangState(l);
-    try { localStorage.setItem('lang', l); } catch { /* ignore */ }
+    try { localStorage.setItem('lang', l); localStorage.setItem('langManual', '1'); } catch { /* ignore */ }
+  }, []);
+
+  // Automatic switching: device language changes, and the script the visitor types with (Arabic keyboard).
+  useEffect(() => {
+    const onInput = (e: Event) => {
+      if (isManual() || location.pathname.startsWith('/admin')) return;
+      const el = e.target as HTMLInputElement | HTMLTextAreaElement | null;
+      if (!el || typeof el.value !== 'string') return;
+      if (el.type === 'password' || el.type === 'email' || el.type === 'number' || el.type === 'tel') return;
+      const v = el.value;
+      const ar = (v.match(/[\u0600-\u06FF]/g) || []).length;
+      if (ar >= 3 && ar > v.length / 2) setLangState('ar');
+    };
+    const onLang = () => { if (!isManual()) setLangState(detect()); };
+    document.addEventListener('input', onInput, true);
+    window.addEventListener('languagechange', onLang);
+    return () => {
+      document.removeEventListener('input', onInput, true);
+      window.removeEventListener('languagechange', onLang);
+    };
   }, []);
 
   const t = useCallback(
