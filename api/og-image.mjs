@@ -14,7 +14,9 @@ export default async function handler(req, res) {
     const r = await fetch(url.toString(), { signal: AbortSignal.timeout(8000) });
     if (!r.ok) return res.status(502).send('source ' + r.status);
     const input = Buffer.from(await r.arrayBuffer());
-    let img = sharp(input).rotate().resize(800, 800, { fit: 'cover' });
+    const W = Math.min(Math.max(parseInt(String(req.query.w || '800'), 10) || 800, 200), 1600);
+    const H = Math.min(Math.max(parseInt(String(req.query.h || '800'), 10) || 800, 200), 1600);
+    let img = sharp(input).rotate().resize(W, H, { fit: 'cover' });
     if (String(req.query.play || '') === '1') {
       const svg = Buffer.from('<svg width="800" height="800" xmlns="http://www.w3.org/2000/svg"><circle cx="400" cy="400" r="96" fill="#000" fill-opacity="0.55"/><circle cx="400" cy="400" r="96" fill="none" stroke="#fff" stroke-width="6"/><polygon points="372,350 372,450 458,400" fill="#fff"/></svg>');
       img = img.composite([{ input: svg }]);
