@@ -162,6 +162,32 @@ service cloud.firestore {
       allow update, delete: if isOwner();
     }
 
+    // --- Traffic counters -----------------------------------------------------
+    // Visitors write anonymously but can only bump a counter by 1 per write.
+    // Only staff read; a seller reads only rows stamped with their own address.
+    match /traffic/{id} {
+      allow read: if managesEverything() || (isSeller() && resource.data.get('sellerId', '') == email());
+      allow create: if request.resource.data.keys().hasOnly(['day','slug','sellerId','views','qr','visitors','updatedAt'])
+                    && id == request.resource.data.day + '__' + request.resource.data.slug
+                    && request.resource.data.get('views', 0) <= 1
+                    && request.resource.data.get('qr', 0) <= 1
+                    && request.resource.data.get('visitors', 0) <= 1;
+      allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['views','qr','visitors','updatedAt'])
+                    && request.resource.data.get('views', 0) - resource.data.get('views', 0) <= 1
+                    && request.resource.data.get('qr', 0) - resource.data.get('qr', 0) <= 1
+                    && request.resource.data.get('visitors', 0) - resource.data.get('visitors', 0) <= 1;
+      allow delete: if isOwner();
+    }
+
+    // --- Push tokens ------------------------------------------------------------
+    // A device registers itself (the token is its key); only staff can read the list.
+    match /pushTokens/{id} {
+      allow read, delete: if managesEverything();
+      allow create, update: if request.resource.data.keys().hasOnly(['token','sellers','lang','updatedAt'])
+                            && request.resource.data.token == id
+                            && request.resource.data.get('sellers', []).size() <= 20;
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

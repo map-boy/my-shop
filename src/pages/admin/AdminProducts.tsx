@@ -1,8 +1,8 @@
-// FILE: src/pages/admin/AdminProducts.tsx
+﻿// FILE: src/pages/admin/AdminProducts.tsx
 import React, { useMemo, useState } from 'react';
 import { deleteDoc, doc, setDoc, addDoc, collection, writeBatch } from 'firebase/firestore';
 import {
-  Copy, Eye, EyeOff, Package, Pencil, Plus, Search, Star, Trash2,
+  Copy, Eye, EyeOff, LayoutGrid, List, Package, Pencil, Plus, Search, Star, Trash2,
 } from 'lucide-react';
 import { db } from '../../lib/firebase';
 import { useStore } from '../../context/StoreContext';
@@ -15,6 +15,17 @@ import { seedDemoCatalogue } from '../../data/seed';
 import type { Product } from '../../lib/types';
 import { cn, errorMessage, PLACEHOLDER_IMAGE, slugify } from '../../lib/utils';
 
+type View = 'list' | 'grid';
+const VIEW_KEY = 'my-shop.admin.productsView';
+
+function readView(): View {
+  try {
+    return localStorage.getItem(VIEW_KEY) === 'grid' ? 'grid' : 'list';
+  } catch {
+    return 'list';
+  }
+}
+
 const AdminProducts: React.FC = () => {
   const { products, categories, money } = useStore();
   const { admin, isSeller, managesEverything } = useAuth();
@@ -23,6 +34,8 @@ const AdminProducts: React.FC = () => {
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
   const [category, setCategory] = useState('');
+  const [seller, setSeller] = useState('');
+  const [view, setViewState] = useState<View>(readView);
   const [selected, setSelected] = useState<string[]>([]);
   const [editing, setEditing] = useState<Product | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
@@ -30,11 +43,16 @@ const AdminProducts: React.FC = () => {
   const [busy, setBusy] = useState(false);
   const [seeding, setSeeding] = useState(false);
 
+  const setView = (v: View) => {
+    setViewState(v);
+    try { localStorage.setItem(VIEW_KEY, v); } catch { /* storage blocked */ }
+  };
+
   const seed = async () => {
     setSeeding(true);
     try {
       const { products: n } = await seedDemoCatalogue();
-      toast.success(`${n} demo products added — edit or delete them freely.`);
+      toast.success(`${n} demo products added - edit or delete them freely.`);
     } catch (err) {
       toast.error(errorMessage(err));
     } finally {
@@ -43,7 +61,7 @@ const AdminProducts: React.FC = () => {
   };
 
   // A seller's catalogue is only ever their own rows. The security rules
-  // enforce this too — this is just so the screen shows the truth.
+  // enforce this too - this is just so the screen shows the truth.
   const visibleProducts = useMemo(
     () =>
       isSeller && admin?.email
@@ -52,20 +70,35 @@ const AdminProducts: React.FC = () => {
     [products, isSeller, admin?.email],
   );
 
+  // Owner/admin only: one entry per seller that has listings.
+  const sellerOptions = useMemo(() => {
+    const map = new Map<string, string>();
+    products.forEach((p) => {
+      const id = (p.sellerId ?? '').toLowerCase();
+      if (id && !map.has(id)) map.set(id, p.sellerName || id);
+    });
+    return [...map.entries()].sort((a, b) => a[1].localeCompare(b[1]));
+  }, [products]);
+
   const rows = useMemo(() => {
     const needle = search.trim().toLowerCase();
     return visibleProducts.filter((p) => {
       if (status && p.status !== status) return false;
       if (category && p.categoryId !== category) return false;
+      if (managesEverything && seller) {
+        const sid = (p.sellerId ?? '').toLowerCase();
+        if (seller === '__own' ? sid !== '' : sid !== seller) return false;
+      }
       if (!needle) return true;
       return (
         p.name.toLowerCase().includes(needle) ||
         p.sku?.toLowerCase().includes(needle) ||
         p.categoryName?.toLowerCase().includes(needle) ||
+        p.sellerName?.toLowerCase().includes(needle) ||
         p.tags?.some((t) => t.includes(needle))
       );
     });
-  }, [visibleProducts, search, status, category]);
+  }, [visibleProducts, search, status, category, seller, managesEverything]);
 
   const allChecked = rows.length > 0 && selected.length === rows.length;
 
@@ -140,6 +173,65 @@ const AdminProducts: React.FC = () => {
     }
   };
 
+  const iconBtn = 'rounded-lg p-2 text-ink-400 transition hover:bg-white/10 hover:text-white';
+
+  const actions = (p: Product) => (
+    <div className="flex items-center justify-end gap-1">
+      <button
+        onClick={() => void patch(p.id, { featured: !p.featured }, 'toggled featured')}
+        title={p.featured ? 'Remove from featured' : 'Mark as featured'}
+        className={cn('rounded-lg p-2 transition hover:bg-white/10', p.featured ? 'text-accent' : 'text-ink-600')}
+      >
+        <Star size={15} className={p.featured ? 'fill-current' : ''} />
+      </button>
+      <button
+        onClick={() => void patch(p.id, { status: p.status === 'active' ? 'draft' : 'active' }, 'toggled visibility')}
+        title={p.status === 'active' ? 'Hide from shop' : 'Publish'}
+        className={iconBtn}
+      >
+        {p.status === 'active' ? <Eye size={15} /> : <EyeOff size={15} />}
+      </button>
+      <button onClick={() => void duplicate(p)} title="Duplicate" className={iconBtn}>
+        <Copy size={15} />
+      </button>
+      <button onClick={() => openEdit(p)} title="Edit" className={iconBtn}>
+        <Pencil size={15} />
+      </button>
+      <button
+        onClick={() => setConfirm({ ids: [p.id], label: p.name })}
+        title="Delete"
+        className="rounded-lg p-2 text-ink-400 transition hover:bg-red-500/20 hover:text-red-400"
+      >
+        <Trash2 size={15} />
+      </button>
+    </div>
+  );
+
+  const stockLabel = (p: Product) => {
+    const soldOut = p.trackStock && p.stock <= 0;
+    if (!p.trackStock) return <span className="text-ink-600">{'\u221E'}</span>;
+    return (
+      <span className={cn('font-semibold', soldOut ? 'text-red-400' : p.stock <= 5 ? 'text-amber-400' : 'text-ink-300')}>
+        {p.stock}
+      </span>
+    );
+  };
+
+  const toggleBtn = (v: View, label: string, icon: React.ReactNode) => (
+    <button
+      onClick={() => setView(v)}
+      title={label}
+      aria-label={label}
+      aria-pressed={view === v}
+      className={cn(
+        'flex h-11 w-11 items-center justify-center rounded-lg transition',
+        view === v ? 'bg-accent text-ink-950' : 'text-ink-400 hover:bg-white/10 hover:text-white',
+      )}
+    >
+      {icon}
+    </button>
+  );
+
   return (
     <div className="space-y-6">
       <header className="flex flex-wrap items-end justify-between gap-4">
@@ -147,8 +239,9 @@ const AdminProducts: React.FC = () => {
           <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-accent">Catalogue</p>
           <h1 className="mt-2 font-display text-3xl font-bold text-white sm:text-4xl">Products</h1>
           <p className="mt-2 text-sm text-ink-400">
-            {visibleProducts.length} total · {visibleProducts.filter((p) => p.status === 'active').length} live
-          {isSeller && ' · your listings only'}
+            {visibleProducts.length} total {'\u00B7'} {visibleProducts.filter((p) => p.status === 'active').length} live
+            {isSeller && ` ${'\u00B7'} your listings only`}
+            {managesEverything && sellerOptions.length > 0 && ` ${'\u00B7'} ${sellerOptions.length} seller${sellerOptions.length === 1 ? '' : 's'}`}
           </p>
         </div>
         <Button variant="accent" size="lg" icon={<Plus size={17} />} onClick={openNew}>
@@ -163,10 +256,21 @@ const AdminProducts: React.FC = () => {
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search name, SKU or tag…"
+            placeholder="Search name, SKU, tag or seller..."
             className="pl-10"
           />
         </div>
+        {managesEverything && (
+          <div className="w-52">
+            <Select value={seller} onChange={(e) => setSeller(e.target.value)}>
+              <option value="">All sellers</option>
+              <option value="__own">Platform's own</option>
+              {sellerOptions.map(([id, name]) => (
+                <option key={id} value={id}>{name}</option>
+              ))}
+            </Select>
+          </div>
+        )}
         <div className="w-40">
           <Select value={status} onChange={(e) => setStatus(e.target.value)}>
             <option value="">All statuses</option>
@@ -182,6 +286,10 @@ const AdminProducts: React.FC = () => {
               <option key={c.id} value={c.id}>{c.name}</option>
             ))}
           </Select>
+        </div>
+        <div className="flex items-center gap-1 rounded-xl border border-white/10 bg-white/[0.03] p-1">
+          {toggleBtn('list', 'List view', <List size={17} />)}
+          {toggleBtn('grid', 'Grid view', <LayoutGrid size={17} />)}
         </div>
       </div>
 
@@ -211,7 +319,6 @@ const AdminProducts: React.FC = () => {
         </div>
       )}
 
-      {/* Table */}
       {rows.length === 0 ? (
         <EmptyState
           icon={<Package size={40} />}
@@ -219,7 +326,7 @@ const AdminProducts: React.FC = () => {
           text={
             visibleProducts.length
               ? 'Try a different search term or clear the filters.'
-              : 'Add your first product — it appears on the storefront the moment you save.'
+              : 'Add your first product - it appears on the storefront the moment you save.'
           }
           action={
             <div className="flex flex-wrap justify-center gap-3">
@@ -233,6 +340,61 @@ const AdminProducts: React.FC = () => {
           }
           className="border-white/15 text-white"
         />
+      ) : view === 'grid' ? (
+        <>
+          <label className="flex items-center gap-2 text-xs text-ink-400">
+            <input type="checkbox" checked={allChecked} onChange={toggleAll} className="h-4 w-4 accent-[var(--accent)]" />
+            Select all {rows.length}
+          </label>
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+            {rows.map((p) => (
+              <article
+                key={p.id}
+                className={cn(
+                  'overflow-hidden rounded-2xl border bg-white/[0.03] transition',
+                  selected.includes(p.id) ? 'border-accent' : 'border-white/10 hover:border-white/25',
+                )}
+              >
+                <div className="relative aspect-square bg-ink-900">
+                  <button onClick={() => openEdit(p)} className="block h-full w-full" aria-label={`Edit ${p.name}`}>
+                    <img
+                      src={p.images?.[0] || PLACEHOLDER_IMAGE}
+                      alt=""
+                      loading="lazy"
+                      className={cn('h-full w-full object-cover', p.status !== 'active' && 'opacity-60')}
+                      onError={(e) => ((e.target as HTMLImageElement).src = PLACEHOLDER_IMAGE)}
+                    />
+                  </button>
+                  <input
+                    type="checkbox"
+                    checked={selected.includes(p.id)}
+                    onChange={() => toggleOne(p.id)}
+                    className="absolute left-3 top-3 h-5 w-5 accent-[var(--accent)]"
+                    aria-label={`Select ${p.name}`}
+                  />
+                  <div className="absolute right-3 top-3">
+                    <Badge tone={p.status === 'active' ? 'green' : p.status === 'draft' ? 'amber' : 'neutral'}>
+                      {p.status}
+                    </Badge>
+                  </div>
+                </div>
+                <div className="p-3">
+                  <button onClick={() => openEdit(p)} className="block w-full text-left">
+                    <span className="block truncate text-sm font-semibold text-white">{p.name}</span>
+                  </button>
+                  <p className="mt-0.5 truncate text-[11px] text-ink-500">
+                    {managesEverything && p.sellerName ? p.sellerName : p.categoryName || '-'}
+                  </p>
+                  <div className="mt-2 flex items-baseline justify-between gap-2">
+                    <span className="text-sm font-bold text-white">{money(p.price)}</span>
+                    <span className="text-[11px] text-ink-500">Stock: {stockLabel(p)}</span>
+                  </div>
+                  <div className="mt-2 border-t border-white/5 pt-1">{actions(p)}</div>
+                </div>
+              </article>
+            ))}
+          </div>
+        </>
       ) : (
         <div className="overflow-hidden rounded-2xl border border-white/10">
           <div className="thin-scrollbar overflow-x-auto">
@@ -251,103 +413,49 @@ const AdminProducts: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
-                {rows.map((p) => {
-                  const soldOut = p.trackStock && p.stock <= 0;
-                  return (
-                    <tr key={p.id} className="transition hover:bg-white/[0.02]">
-                      <td className="px-4 py-3">
-                        <input
-                          type="checkbox"
-                          checked={selected.includes(p.id)}
-                          onChange={() => toggleOne(p.id)}
-                          className="h-4 w-4 accent-[var(--accent)]"
+                {rows.map((p) => (
+                  <tr key={p.id} className="transition hover:bg-white/[0.02]">
+                    <td className="px-4 py-3">
+                      <input
+                        type="checkbox"
+                        checked={selected.includes(p.id)}
+                        onChange={() => toggleOne(p.id)}
+                        className="h-4 w-4 accent-[var(--accent)]"
+                      />
+                    </td>
+                    <td className="px-3 py-3">
+                      <button onClick={() => openEdit(p)} className="flex items-center gap-3 text-left">
+                        <img
+                          src={p.images?.[0] || PLACEHOLDER_IMAGE}
+                          alt=""
+                          className="h-12 w-12 shrink-0 rounded-lg object-cover"
+                          onError={(e) => ((e.target as HTMLImageElement).src = PLACEHOLDER_IMAGE)}
                         />
-                      </td>
-                      <td className="px-3 py-3">
-                        <button onClick={() => openEdit(p)} className="flex items-center gap-3 text-left">
-                          <img
-                            src={p.images?.[0] || PLACEHOLDER_IMAGE}
-                            alt=""
-                            className="h-12 w-12 shrink-0 rounded-lg object-cover"
-                            onError={(e) => ((e.target as HTMLImageElement).src = PLACEHOLDER_IMAGE)}
-                          />
-                          <span className="min-w-0">
-                            <span className="block max-w-[16rem] truncate font-semibold text-white">{p.name}</span>
-                            <span className="block text-[11px] text-ink-500">
-                          {p.sku || '—'}
-                          {managesEverything && p.sellerName ? ` · ${p.sellerName}` : ''}
+                        <span className="min-w-0">
+                          <span className="block max-w-[16rem] truncate font-semibold text-white">{p.name}</span>
+                          <span className="block text-[11px] text-ink-500">
+                            {p.sku || '-'}
+                            {managesEverything && p.sellerName ? ` ${'\u00B7'} ${p.sellerName}` : ''}
+                          </span>
                         </span>
-                          </span>
-                        </button>
-                      </td>
-                      <td className="px-3 py-3 text-ink-400">{p.categoryName || '—'}</td>
-                      <td className="px-3 py-3">
-                        <span className="font-semibold text-white">{money(p.price)}</span>
-                        {p.compareAtPrice > p.price && (
-                          <span className="ml-2 text-[11px] text-ink-600 line-through">{money(p.compareAtPrice)}</span>
-                        )}
-                      </td>
-                      <td className="px-3 py-3">
-                        {p.trackStock ? (
-                          <span className={cn('font-semibold', soldOut ? 'text-red-400' : p.stock <= 5 ? 'text-amber-400' : 'text-ink-300')}>
-                            {p.stock}
-                          </span>
-                        ) : (
-                          <span className="text-ink-600">∞</span>
-                        )}
-                      </td>
-                      <td className="px-3 py-3">
-                        <Badge tone={p.status === 'active' ? 'green' : p.status === 'draft' ? 'amber' : 'neutral'}>
-                          {p.status}
-                        </Badge>
-                      </td>
-                      <td className="px-3 py-3">
-                        <div className="flex items-center justify-end gap-1">
-                          <button
-                            onClick={() => void patch(p.id, { featured: !p.featured }, 'toggled featured')}
-                            title={p.featured ? 'Remove from featured' : 'Mark as featured'}
-                            className={cn(
-                              'rounded-lg p-2 transition hover:bg-white/10',
-                              p.featured ? 'text-accent' : 'text-ink-600',
-                            )}
-                          >
-                            <Star size={15} className={p.featured ? 'fill-current' : ''} />
-                          </button>
-                          <button
-                            onClick={() =>
-                              void patch(p.id, { status: p.status === 'active' ? 'draft' : 'active' }, 'toggled visibility')
-                            }
-                            title={p.status === 'active' ? 'Hide from shop' : 'Publish'}
-                            className="rounded-lg p-2 text-ink-400 transition hover:bg-white/10 hover:text-white"
-                          >
-                            {p.status === 'active' ? <Eye size={15} /> : <EyeOff size={15} />}
-                          </button>
-                          <button
-                            onClick={() => void duplicate(p)}
-                            title="Duplicate"
-                            className="rounded-lg p-2 text-ink-400 transition hover:bg-white/10 hover:text-white"
-                          >
-                            <Copy size={15} />
-                          </button>
-                          <button
-                            onClick={() => openEdit(p)}
-                            title="Edit"
-                            className="rounded-lg p-2 text-ink-400 transition hover:bg-white/10 hover:text-white"
-                          >
-                            <Pencil size={15} />
-                          </button>
-                          <button
-                            onClick={() => setConfirm({ ids: [p.id], label: p.name })}
-                            title="Delete"
-                            className="rounded-lg p-2 text-ink-400 transition hover:bg-red-500/20 hover:text-red-400"
-                          >
-                            <Trash2 size={15} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
+                      </button>
+                    </td>
+                    <td className="px-3 py-3 text-ink-400">{p.categoryName || '-'}</td>
+                    <td className="px-3 py-3">
+                      <span className="font-semibold text-white">{money(p.price)}</span>
+                      {p.compareAtPrice > p.price && (
+                        <span className="ml-2 text-[11px] text-ink-600 line-through">{money(p.compareAtPrice)}</span>
+                      )}
+                    </td>
+                    <td className="px-3 py-3">{stockLabel(p)}</td>
+                    <td className="px-3 py-3">
+                      <Badge tone={p.status === 'active' ? 'green' : p.status === 'draft' ? 'amber' : 'neutral'}>
+                        {p.status}
+                      </Badge>
+                    </td>
+                    <td className="px-3 py-3">{actions(p)}</td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
@@ -359,7 +467,7 @@ const AdminProducts: React.FC = () => {
       <ConfirmDialog
         open={!!confirm}
         title="Delete permanently?"
-        message={`“${confirm?.label ?? ''}” will be removed from the shop. This cannot be undone — archive instead if you may want it back.`}
+        message={`"${confirm?.label ?? ''}" will be removed from the shop. This cannot be undone - archive instead if you may want it back.`}
         confirmLabel="Delete"
         destructive
         busy={busy}

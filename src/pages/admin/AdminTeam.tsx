@@ -1,7 +1,7 @@
-// FILE: src/pages/admin/AdminTeam.tsx
+﻿// FILE: src/pages/admin/AdminTeam.tsx
 import React, { useState } from 'react';
-import { deleteDoc, doc, setDoc } from 'firebase/firestore';
-import { Crown, Plus, ShieldCheck, ShieldX, Trash2, UserCog } from 'lucide-react';
+import { deleteDoc, doc, setDoc, writeBatch } from 'firebase/firestore';
+import { Copy, Crown, MessageCircle, Pencil, Plus, ShieldCheck, ShieldX, Trash2, UserCog } from 'lucide-react';
 import { db, OWNER_EMAIL } from '../../lib/firebase';
 import { useAdminData } from '../../hooks/useAdminData';
 import { useStore } from '../../context/StoreContext';
@@ -15,7 +15,19 @@ import { cn, errorMessage, formatDate, timeAgo } from '../../lib/utils';
 const ROLE_COPY: Record<AdminRole, string> = {
   owner: 'Full control, including adding and removing other administrators.',
   admin: 'Can change everything in the shop, but cannot manage the team.',
-  seller: 'Sells on the shop. Sees and edits only their own products, promotions and orders — nothing belonging to another seller.',
+  seller: 'Sells on the shop. Sees and edits only their own products, promotions and orders - nothing belonging to another seller.',
+};
+
+const portalUrl = () => `${window.location.origin}/admin`;
+
+const portalMessage = (a: Pick<AdminUser, 'email' | 'name' | 'shopName'>) =>
+  `Hello${a.name ? ' ' + a.name : ''}, your seller portal${a.shopName ? ' for ' + a.shopName : ''} is ready. ` +
+  `Open ${portalUrl()} and sign in with Google using ${a.email}. You will see and manage only your own shop.`;
+
+const whatsappLink = (phone: string, text: string) => {
+  let d = (phone || '').replace(/\D/g, '');
+  if (d.length === 10 && d.startsWith('0')) d = '250' + d.slice(1);
+  return `https://wa.me/${d}?text=${encodeURIComponent(text)}`;
 };
 
 const AdminTeam: React.FC = () => {
@@ -26,6 +38,8 @@ const AdminTeam: React.FC = () => {
 
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState('');
+  const [shopName, setShopName] = useState('');
+  const [phone, setPhone] = useState('');
   const [role, setRole] = useState<AdminRole>('seller');
   const [busy, setBusy] = useState(false);
   const [confirm, setConfirm] = useState<AdminUser | null>(null);
@@ -34,6 +48,7 @@ const AdminTeam: React.FC = () => {
     const clean = email.trim().toLowerCase();
     if (!clean.includes('@')) return toast.error('Enter a valid e-mail address.');
     if (admins.some((a) => a.id === clean)) return toast.error('That account is already an administrator.');
+    if (role === 'seller' && !shopName.trim()) return toast.error('Give the seller a shop name.');
 
     setBusy(true);
     try {
@@ -46,15 +61,17 @@ const AdminTeam: React.FC = () => {
         addedBy: me?.email ?? 'owner',
         addedAt: Date.now(),
         lastLogin: 0,
-        shopName: '',
-        phone: '',
+        shopName: role === 'seller' ? shopName.trim() : '',
+        phone: phone.trim(),
         about: '',
         logoUrl: '',
-        profileComplete: false,
+        profileComplete: role === 'seller' && !!shopName.trim(),
       });
       logActivity(me?.email ?? 'owner', 'granted admin access', clean);
       toast.success(`${clean} can now sign in with Google.`);
       setEmail('');
+      setShopName('');
+      setPhone('');
       setOpen(false);
     } catch (err) {
       toast.error(errorMessage(err));
@@ -98,6 +115,36 @@ const AdminTeam: React.FC = () => {
     }
   };
 
+  const copyPortal = async (a: AdminUser) => {
+    try {
+      await navigator.clipboard.writeText(portalMessage(a));
+      toast.success('Portal message copied.');
+    } catch {
+      toast.error('Could not copy. Your browser blocked clipboard access.');
+    }
+  };
+
+  const renameShop = async (a: AdminUser) => {
+    const next = window.prompt('Shop name for ' + a.email, a.shopName || '');
+    if (next === null) return;
+    const name = next.trim();
+    if (!name) return toast.error('A shop name cannot be empty.');
+    try {
+      await setDoc(doc(db, 'admins', a.id), { shopName: name, profileComplete: true }, { merge: true });
+      // Products carry a copy of the shop name, so keep them in step.
+      const mine = products.filter((p) => (p.sellerId ?? '').toLowerCase() === a.id.toLowerCase());
+      for (let i = 0; i < mine.length; i += 400) {
+        const batch = writeBatch(db);
+        mine.slice(i, i + 400).forEach((p) => batch.set(doc(db, 'products', p.id), { sellerName: name }, { merge: true }));
+        await batch.commit();
+      }
+      logActivity(me?.email ?? 'owner', 'renamed shop to ' + name, a.email);
+      toast.success('Shop renamed.');
+    } catch (err) {
+      toast.error(errorMessage(err));
+    }
+  };
+
   return (
     <div className="space-y-6">
       <header className="flex flex-wrap items-end justify-between gap-4">
@@ -105,14 +152,14 @@ const AdminTeam: React.FC = () => {
           <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-accent">Storefront</p>
           <h1 className="mt-2 font-display text-3xl font-bold text-white sm:text-4xl">Sellers & access</h1>
           <p className="mt-2 max-w-2xl text-sm text-ink-400">
-            Anyone listed here signs in with their Google account — no passwords. A <strong>seller</strong>{' '}
+            Anyone listed here signs in with their Google account - no passwords. A <strong>seller</strong>{' '}
             sees only their own products, promotions and orders. An <strong>admin</strong> or{' '}
             <strong>owner</strong> sees everything.
           </p>
         </div>
         {isOwner && (
           <Button variant="accent" size="lg" icon={<Plus size={17} />} onClick={() => setOpen(true)}>
-            Add an administrator
+            Add a seller or admin
           </Button>
         )}
       </header>
@@ -128,13 +175,14 @@ const AdminTeam: React.FC = () => {
         <EmptyState
           icon={<UserCog size={40} />}
           title="Just you so far"
-          text="Invite a colleague by e-mail and they can sign in with Google straight away."
+          text="Invite a seller by e-mail and they can sign in with Google straight away."
           className="border-white/15 text-white"
         />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {admins.map((a) => {
             const isBootstrapOwner = a.id === OWNER_EMAIL;
+            const mine = products.filter((p) => (p.sellerId ?? '').toLowerCase() === a.id.toLowerCase());
             return (
               <article
                 key={a.id}
@@ -148,11 +196,13 @@ const AdminTeam: React.FC = () => {
                     <img src={a.photoURL} alt="" className="h-12 w-12 shrink-0 rounded-full object-cover" />
                   ) : (
                     <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-accent text-sm font-black text-ink-950">
-                      {(a.name || a.email).slice(0, 1).toUpperCase()}
+                      {(a.shopName || a.name || a.email).slice(0, 1).toUpperCase()}
                     </span>
                   )}
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-semibold text-white">{a.name || 'Not signed in yet'}</p>
+                    <p className="truncate font-semibold text-white">
+                      {a.role === 'seller' && a.shopName ? a.shopName : a.name || 'Not signed in yet'}
+                    </p>
                     <p className="truncate text-xs text-ink-500">{a.email}</p>
                   </div>
                   {isBootstrapOwner && <Crown size={16} className="shrink-0 text-accent" />}
@@ -173,34 +223,50 @@ const AdminTeam: React.FC = () => {
                       <dd className="text-ink-200">{a.shopName || <span className="text-amber-400">not set up yet</span>}</dd>
                     </div>
                     <div className="flex justify-between">
+                      <dt>Owner</dt>
+                      <dd className="text-ink-200">{a.name || '-'}</dd>
+                    </div>
+                    <div className="flex justify-between">
                       <dt>Phone</dt>
-                      <dd className="text-ink-200">{a.phone || '—'}</dd>
+                      <dd className="text-ink-200">{a.phone || '-'}</dd>
                     </div>
                     <div className="flex justify-between">
                       <dt>Listings</dt>
-                      <dd className="text-ink-200">
-                        {products.filter(
-                          (p) => (p.sellerId ?? '').toLowerCase() === a.id.toLowerCase(),
-                        ).length}
-                      </dd>
+                      <dd className="text-ink-200">{mine.length}</dd>
                     </div>
                     <div className="flex justify-between">
                       <dt>Stock value</dt>
                       <dd className="text-ink-200">
-                        {money(
-                          products
-                            .filter((p) => (p.sellerId ?? '').toLowerCase() === a.id.toLowerCase())
-                            .reduce((n, p) => n + (p.trackStock ? p.stock * p.price : 0), 0),
-                        )}
+                        {money(mine.reduce((n, p) => n + (p.trackStock ? p.stock * p.price : 0), 0))}
                       </dd>
                     </div>
                   </dl>
                 )}
 
+                {a.role === 'seller' && isOwner && (
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <Button size="sm" variant="subtle" icon={<Copy size={14} />} onClick={() => void copyPortal(a)}>
+                      Copy portal link
+                    </Button>
+                    <a
+                      href={whatsappLink(a.phone, portalMessage(a))}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      <Button size="sm" variant="subtle" icon={<MessageCircle size={14} />}>
+                        WhatsApp
+                      </Button>
+                    </a>
+                    <Button size="sm" variant="subtle" icon={<Pencil size={14} />} onClick={() => void renameShop(a)}>
+                      Rename
+                    </Button>
+                  </div>
+                )}
+
                 <dl className="mt-4 space-y-1.5 text-[11px] text-ink-500">
                   <div className="flex justify-between">
                     <dt>Added</dt>
-                    <dd>{a.addedAt ? formatDate(a.addedAt) : '—'}{a.addedBy ? ` by ${a.addedBy}` : ''}</dd>
+                    <dd>{a.addedAt ? formatDate(a.addedAt) : '-'}{a.addedBy ? ` by ${a.addedBy}` : ''}</dd>
                   </div>
                   <div className="flex justify-between">
                     <dt>Last seen</dt>
@@ -268,8 +334,8 @@ const AdminTeam: React.FC = () => {
       <Modal
         open={open}
         onClose={() => setOpen(false)}
-        title="Add a seller"
-        subtitle="They sign in with Google — there is no password to share."
+        title="Add a seller or admin"
+        subtitle="They sign in with Google - there is no password to share."
         footer={
           <div className="flex justify-end gap-3">
             <Button variant="outline" onClick={() => setOpen(false)} disabled={busy}>Cancel</Button>
@@ -278,6 +344,25 @@ const AdminTeam: React.FC = () => {
         }
       >
         <div className="space-y-5">
+          <Field label="Role">
+            <Select value={role} onChange={(e) => setRole(e.target.value as AdminRole)}>
+              <option value="seller">Seller</option>
+              <option value="admin">Admin</option>
+              <option value="owner">Owner</option>
+            </Select>
+          </Field>
+
+          {role === 'seller' && (
+            <div className="grid gap-5 sm:grid-cols-2">
+              <Field label="Shop name" required hint="Shown to shoppers on their products.">
+                <Input value={shopName} onChange={(e) => setShopName(e.target.value)} placeholder="Uwase Fashion" />
+              </Field>
+              <Field label="Phone (WhatsApp)" hint="Used to send them their portal link.">
+                <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="0788 000 000" />
+              </Field>
+            </div>
+          )}
+
           <Field
             label="Google account e-mail"
             required
@@ -288,21 +373,12 @@ const AdminTeam: React.FC = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), void invite())}
-              placeholder="colleague@gmail.com"
-              autoFocus
+              placeholder="seller@gmail.com"
             />
           </Field>
 
-          <Field label="Role">
-            <Select value={role} onChange={(e) => setRole(e.target.value as AdminRole)}>
-              <option value="seller">Seller</option>
-              <option value="admin">Admin</option>
-              <option value="owner">Owner</option>
-            </Select>
-          </Field>
-
           <p className="rounded-xl bg-ink-100 p-4 text-xs leading-relaxed text-ink-600">
-            <strong>{role}</strong> — {ROLE_COPY[role]}
+            <strong>{role}</strong> - {ROLE_COPY[role]}
           </p>
         </div>
       </Modal>

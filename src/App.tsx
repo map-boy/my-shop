@@ -24,13 +24,17 @@ import OrderSuccess from './pages/OrderSuccess';
 import About from './pages/About';
 import Contact from './pages/Contact';
 import NotFound from './pages/NotFound';
+import Legal from './pages/Legal';
 import { PageLoader } from './components/ui';
 import SectionsBar from './components/SectionsBar';
 import SectionShelves from './components/SectionShelves';
 import SectionPage from './pages/SectionPage';
+import SellerShop from './pages/SellerShop';
+import Tracker from './components/Tracker';
+import PushPrompt from './components/PushPrompt';
 import { L10n } from './lib/i18n';
 
-// The dashboard is loaded on demand — shoppers never download it.
+// The dashboard is loaded on demand - shoppers never download it.
 const AdminLogin = React.lazy(() => import('./pages/admin/AdminLogin'));
 const AdminLayout = React.lazy(() => import('./pages/admin/AdminLayout'));
 const Dashboard = React.lazy(() => import('./pages/admin/Dashboard'));
@@ -46,6 +50,8 @@ const AdminHomeBuilder = React.lazy(() => import('./pages/admin/AdminHomeBuilder
 const AdminSettings = React.lazy(() => import('./pages/admin/AdminSettings'));
 const AdminTeam = React.lazy(() => import('./pages/admin/AdminTeam'));
 const ShopProfile = React.lazy(() => import('./pages/admin/ShopProfile'));
+const AdminTraffic = React.lazy(() => import('./pages/admin/AdminTraffic'));
+const AdminNotify = React.lazy(() => import('./pages/admin/AdminNotify'));
 
 const ScrollToTop: React.FC = () => {
   const { pathname } = useLocation();
@@ -115,6 +121,8 @@ const App: React.FC = () => (
         <StoreProvider>
           <LanguageProvider><CartProvider>
             <ScrollToTop />
+            <Tracker />
+            <PushPrompt />
             <ErrorBoundary>
             <React.Suspense fallback={<PageLoader />}>
             <Routes>
@@ -122,6 +130,7 @@ const App: React.FC = () => (
               <Route element={<StoreLayout />}>
                 <Route path="/" element={<Home />} />
                 <Route path="/shop" element={<Shop />} />
+                <Route path="/shop/:seller" element={<SellerShop />} />
                 <Route path="/section/:slug" element={<SectionPage />} />
                 <Route path="/product/:slug" element={<ProductDetail />} />
                 <Route path="/categories" element={<Categories />} />
@@ -130,6 +139,11 @@ const App: React.FC = () => (
                 <Route path="/order/:id" element={<OrderSuccess />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/contact" element={<Contact />} />
+                <Route path="/privacy" element={<Legal kind="privacy" />} />
+                <Route path="/terms" element={<Legal kind="terms" />} />
+                <Route path="/shipping-returns" element={<Legal kind="shipping-returns" />} />
+                <Route path="/disclaimer" element={<Legal kind="disclaimer" />} />
+                <Route path="/cookies" element={<Legal kind="cookies" />} />
                 <Route path="*" element={<NotFound />} />
               </Route>
 
@@ -155,6 +169,8 @@ const App: React.FC = () => (
                 <Route path="/admin/settings" element={<PlatformOnly><AdminSettings /></PlatformOnly>} />
                 <Route path="/admin/team" element={<PlatformOnly><AdminTeam /></PlatformOnly>} />
                 <Route path="/admin/shop-profile" element={<ShopProfile />} />
+                <Route path="/admin/traffic" element={<AdminTraffic />} />
+                <Route path="/admin/notify" element={<AdminNotify />} />
               </Route>
 
               <Route path="/admin/*" element={<Navigate to="/admin/dashboard" replace />} />

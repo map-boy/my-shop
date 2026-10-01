@@ -150,6 +150,17 @@ const Footer: React.FC = () => {
           <p>{tx(settings.footer.copyright)}</p>
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
             <span>{tx(settings.footer.paymentNote)}</span>
+            {[
+              ['/privacy', 'Privacy Policy'],
+              ['/terms', 'Terms'],
+              ['/shipping-returns', 'Shipping & Returns'],
+              ['/disclaimer', 'Disclaimer'],
+              ['/cookies', 'Cookies'],
+            ].map(([to, label]) => (
+              <Link key={to} to={to} className="transition hover:text-accent">
+                {L10n(label)}
+              </Link>
+            ))}
             <Link to="/admin" className="inline-flex items-center gap-1.5 transition hover:text-accent">
               <Lock size={12} /> {t('footer.admin')}
             </Link>

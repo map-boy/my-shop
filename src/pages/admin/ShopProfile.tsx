@@ -1,19 +1,20 @@
-// FILE: src/pages/admin/ShopProfile.tsx
+﻿// FILE: src/pages/admin/ShopProfile.tsx
 import React, { useEffect, useState } from 'react';
 import { doc, setDoc } from 'firebase/firestore';
-import { Info, Store } from 'lucide-react';
+import { Info, QrCode, Store } from 'lucide-react';
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../context/AuthContext';
 import { useStore } from '../../context/StoreContext';
 import { useToast } from '../../context/ToastContext';
 import ImageInput from '../../components/ImageInput';
 import SaveBar from '../../components/SaveBar';
+import ShopQr from '../../components/ShopQr';
 import { Button, Field, Input, Textarea } from '../../components/ui';
-import { errorMessage } from '../../lib/utils';
+import { errorMessage, slugify } from '../../lib/utils';
 
 /**
  * Where a seller fills in who they are. The security rules let them write only
- * their own record, and only the fields below — role and suspension are not
+ * their own record, and only the fields below - role and suspension are not
  * theirs to change.
  */
 const ShopProfile: React.FC = () => {
@@ -70,6 +71,9 @@ const ShopProfile: React.FC = () => {
     }
   };
 
+  const shopSlug = slugify(admin?.shopName ?? '');
+  const shopUrl = `${window.location.origin}/shop/${shopSlug}`;
+
   return (
     <div className="space-y-6">
       <header>
@@ -82,7 +86,7 @@ const ShopProfile: React.FC = () => {
 
       {!admin?.profileComplete && (
         <div className="rounded-xl border border-accent/40 bg-accent/10 p-4 text-sm text-white">
-          Fill this in before you add your first product — your listings will carry this name.
+          Fill this in before you add your first product - your listings will carry this name.
         </div>
       )}
 
@@ -102,7 +106,7 @@ const ShopProfile: React.FC = () => {
           </div>
 
           <Field label="Phone" hint="How the shop owner reaches you about your orders.">
-            <Input value={form.phone} onChange={(e) => set('phone', e.target.value)} placeholder="+250 7…" />
+            <Input value={form.phone} onChange={(e) => set('phone', e.target.value)} placeholder="+250 7..." />
           </Field>
 
           <Field label="About your shop" hint="A sentence or two about what you sell.">
@@ -122,11 +126,26 @@ const ShopProfile: React.FC = () => {
             <p className="label">Sign-in account</p>
             <p className="font-mono text-sm text-white">{admin?.email}</p>
             <p className="mt-2 text-[11px] text-ink-500">
-              This is fixed — it is the Google account the shop owner gave access to.
+              This is fixed - it is the Google account the shop owner gave access to.
             </p>
           </div>
         </div>
       </section>
+
+      {shopSlug && (
+        <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 sm:p-8">
+          <h2 className="flex items-center gap-2.5 font-display text-xl font-bold text-white">
+            <QrCode size={19} className="text-accent" /> Your shop link and QR code
+          </h2>
+          <p className="mt-2 max-w-2xl text-sm text-ink-400">
+            Share this link or print the QR. It opens a page with only your products. If you change your shop
+            name, the link changes too.
+          </p>
+          <div className="mt-6">
+            <ShopQr url={shopUrl} qrUrl={`${shopUrl}?src=qr`} fileName={`${shopSlug}-qr.png`} />
+          </div>
+        </section>
+      )}
 
       <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 sm:p-8">
         <h2 className="flex items-center gap-2.5 font-display text-xl font-bold text-white">
@@ -134,7 +153,7 @@ const ShopProfile: React.FC = () => {
         </h2>
         <div className="mt-5 space-y-3 text-sm leading-relaxed text-ink-400">
           <p>
-            Shoppers pay the shop directly — MTN Mobile Money on the shop's own pay code, or cash on
+            Shoppers pay the shop directly - MTN Mobile Money on the shop's own pay code, or cash on
             delivery. Nothing is charged to your own MoMo number, and the payment details are not
             editable from a seller account.
           </p>
