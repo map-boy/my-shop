@@ -25,6 +25,8 @@ import About from './pages/About';
 import Contact from './pages/Contact';
 import NotFound from './pages/NotFound';
 import Legal from './pages/Legal';
+import Blog from './pages/Blog';
+import BlogPost from './pages/BlogPost';
 import { PageLoader } from './components/ui';
 import SectionsBar from './components/SectionsBar';
 import SectionShelves from './components/SectionShelves';
@@ -52,6 +54,7 @@ const AdminTeam = React.lazy(() => import('./pages/admin/AdminTeam'));
 const ShopProfile = React.lazy(() => import('./pages/admin/ShopProfile'));
 const AdminTraffic = React.lazy(() => import('./pages/admin/AdminTraffic'));
 const AdminNotify = React.lazy(() => import('./pages/admin/AdminNotify'));
+const AdminBlog = React.lazy(() => import('./pages/admin/AdminBlog'));
 
 const ScrollToTop: React.FC = () => {
   const { pathname } = useLocation();
@@ -144,6 +147,8 @@ const App: React.FC = () => (
                 <Route path="/shipping-returns" element={<Legal kind="shipping-returns" />} />
                 <Route path="/disclaimer" element={<Legal kind="disclaimer" />} />
                 <Route path="/cookies" element={<Legal kind="cookies" />} />
+                <Route path="/blog" element={<Blog />} />
+                <Route path="/blog/:slug" element={<BlogPost />} />
                 <Route path="*" element={<NotFound />} />
               </Route>
 
@@ -171,6 +176,7 @@ const App: React.FC = () => (
                 <Route path="/admin/shop-profile" element={<ShopProfile />} />
                 <Route path="/admin/traffic" element={<AdminTraffic />} />
                 <Route path="/admin/notify" element={<AdminNotify />} />
+                <Route path="/admin/blog" element={<PlatformOnly><AdminBlog /></PlatformOnly>} />
               </Route>
 
               <Route path="/admin/*" element={<Navigate to="/admin/dashboard" replace />} />

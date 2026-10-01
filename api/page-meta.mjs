@@ -3,7 +3,7 @@
 const PROJECT_ID = "my-shop-84749";
 const FIRESTORE_BASE = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents`;
 const SITE_ORIGIN = "https://karibu.fit";
-const PAGE_TITLES = { "/shop": "Shop", "/categories": "Categories", "/about": "About", "/contact": "Contact", "/privacy": "Privacy Policy", "/terms": "Terms & Conditions", "/shipping-returns": "Shipping & Returns", "/disclaimer": "Disclaimer", "/cookies": "Cookie Policy" };
+const PAGE_TITLES = { "/shop": "Shop", "/categories": "Categories", "/about": "About", "/contact": "Contact", "/privacy": "Privacy Policy", "/terms": "Terms & Conditions", "/shipping-returns": "Shipping & Returns", "/disclaimer": "Disclaimer", "/cookies": "Cookie Policy", "/blog": "Blog" };
 
 function fv(field) {
   if (!field) return undefined;

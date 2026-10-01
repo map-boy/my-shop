@@ -188,6 +188,13 @@ service cloud.firestore {
                             && request.resource.data.get('sellers', []).size() <= 20;
     }
 
+    // --- Blog ---------------------------------------------------------------
+    // Shoppers read published articles only; drafts are staff-only.
+    match /posts/{id} {
+      allow read: if resource.data.get('published', false) == true || managesEverything();
+      allow write: if managesEverything();
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

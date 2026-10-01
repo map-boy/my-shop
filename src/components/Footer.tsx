@@ -156,6 +156,7 @@ const Footer: React.FC = () => {
               ['/shipping-returns', 'Shipping & Returns'],
               ['/disclaimer', 'Disclaimer'],
               ['/cookies', 'Cookies'],
+              ['/blog', 'Blog'],
             ].map(([to, label]) => (
               <Link key={to} to={to} className="transition hover:text-accent">
                 {L10n(label)}

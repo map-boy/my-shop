@@ -1,6 +1,6 @@
 // FILE: middleware.ts
 export const config = {
-  matcher: ["/", "/shop", "/categories", "/about", "/contact", "/privacy", "/terms", "/shipping-returns", "/disclaimer", "/cookies", "/section/:slug*", "/product/:slug*"],
+  matcher: ["/", "/shop", "/categories", "/about", "/contact", "/privacy", "/terms", "/shipping-returns", "/disclaimer", "/cookies", "/blog", "/section/:slug*", "/product/:slug*"],
 };
 
 // Social / link-preview crawlers. Googlebot is handled separately: it renders JS, so it only gets
