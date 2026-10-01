@@ -147,11 +147,13 @@ export default async function handler(req, res) {
       datePublished: iso(p.createdAt),
       dateModified: iso(p.updatedAt || p.createdAt),
       mainEntityOfPage: canonical,
+      author: { "@type": "Organization", name: storeName },
       publisher: { "@type": "Organization", name: storeName, url: SITE_ORIGIN + "/" },
     },
     main: `<p><a href="/blog">&larr; All articles</a></p>
 <article>
 <h1>${esc(p.title)}</h1>
+<p>By the ${esc(storeName)} editorial team</p>
 ${p.cover ? `<img src="${esc(p.cover)}" alt="${esc(p.title)}" style="max-width:100%;height:auto" />` : ""}
 ${renderBody(p.body)}
 </article>`,

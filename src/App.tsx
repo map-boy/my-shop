@@ -56,6 +56,22 @@ const AdminTraffic = React.lazy(() => import('./pages/admin/AdminTraffic'));
 const AdminNotify = React.lazy(() => import('./pages/admin/AdminNotify'));
 const AdminBlog = React.lazy(() => import('./pages/admin/AdminBlog'));
 
+const CanonicalTag: React.FC = () => {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    if (pathname.startsWith('/admin')) return;
+    const path = pathname.length > 1 ? pathname.replace(/\/+$/, '') || '/' : '/';
+    let el = document.head.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+    if (!el) {
+      el = document.createElement('link');
+      el.rel = 'canonical';
+      document.head.appendChild(el);
+    }
+    el.href = 'https://karibu.fit' + path;
+  }, [pathname]);
+  return null;
+};
+
 const ScrollToTop: React.FC = () => {
   const { pathname } = useLocation();
   useEffect(() => {
@@ -124,6 +140,7 @@ const App: React.FC = () => (
         <StoreProvider>
           <LanguageProvider><CartProvider>
             <ScrollToTop />
+<CanonicalTag />
             <Tracker />
             <PushPrompt />
             <ErrorBoundary>

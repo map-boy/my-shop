@@ -104,10 +104,11 @@ const BlogPost: React.FC = () => {
       <header>
         <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-accent">{formatDate(post.createdAt)}</p>
         <h1 className="mt-3 font-display text-4xl font-bold leading-tight sm:text-5xl">{post.title}</h1>
+        <p className="mt-3 text-sm text-ink-500">By the {settings.storeName} editorial team</p>
         {post.excerpt && <p className="mt-5 text-lg leading-relaxed text-ink-500">{post.excerpt}</p>}
       </header>
       {post.cover && (
-        <img src={post.cover} alt="" className="mt-10 w-full rounded-brand object-cover" onError={(e) => ((e.target as HTMLImageElement).style.display = 'none')} />
+        <img src={post.cover} alt={post.title} className="mt-10 w-full rounded-brand object-cover" onError={(e) => ((e.target as HTMLImageElement).style.display = 'none')} />
       )}
       <div className="mt-10">
         <Body body={post.body} />
