@@ -5,6 +5,7 @@ import { db } from '../lib/firebase';
 import { DEFAULT_SETTINGS, mergeSettings } from '../lib/defaults';
 import type { Category, Product, StoreSettings } from '../lib/types';
 import { contrastOn, currencyLabel, formatMoney } from '../lib/utils';
+import { toUgx, loadCurrency, saveCurrency, detectCurrency, type DisplayCurrency } from '../lib/geoCurrency';
 
 interface StoreState {
   settings: StoreSettings;
@@ -16,6 +17,8 @@ interface StoreState {
   /** Set when Firestore cannot be reached, so the UI can explain itself. */
   error: string | null;
   money: (amount: number) => string;
+  displayCurrency: DisplayCurrency;
+  setDisplayCurrency: (c: DisplayCurrency) => void;
 }
 
 const StoreContext = createContext<StoreState | undefined>(undefined);
@@ -26,6 +29,11 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [displayCurrency, setDisplayCurrencyState] = useState<DisplayCurrency>(() => loadCurrency() || 'RWF');
+  const setDisplayCurrency = (c: DisplayCurrency) => { setDisplayCurrencyState(c); saveCurrency(c); };
+  useEffect(() => {
+    if (!loadCurrency()) detectCurrency().then(setDisplayCurrencyState);
+  }, []);
 
   /* Settings — live, so an admin's edit shows up on every open tab. */
   useEffect(
@@ -87,16 +95,18 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       categories,
       products,
       liveProducts: products.filter((p) => p.status === 'active'),
+      displayCurrency,
+      setDisplayCurrency,
       loading,
       error,
       money: (amount: number) =>
-        formatMoney(amount, {
-          symbol: currencyLabel(settings.currencySymbol || settings.currency),
+        formatMoney(displayCurrency === 'UGX' && settings.currency === 'RWF' ? toUgx(amount) : amount, {
+          symbol: displayCurrency === 'UGX' && settings.currency === 'RWF' ? 'UGX' : currencyLabel(settings.currencySymbol || settings.currency),
           position: settings.currencyPosition,
           locale: settings.locale,
         }),
     }),
-    [settings, categories, products, loading, error],
+    [settings, categories, products, loading, error, displayCurrency],
   );
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
