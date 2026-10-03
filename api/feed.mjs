@@ -2,7 +2,8 @@
 const PROJECT_ID = "my-shop-84749";
 const FIRESTORE_BASE = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents`;
 const SITE_ORIGIN = "https://karibu.fit";
-const CURRENCY = "RWF";
+const CURRENCY = "UGX";
+const UGX_PER_RWF = 2.5; // keep identical to src/lib/geoCurrency.ts
 
 function fv(f) {
   if (!f) return undefined;
@@ -63,7 +64,7 @@ export default async function handler(req, res) {
       <g:image_link>${esc(images[0])}</g:image_link>
 ${extra}
       <g:availability>${stockState(p)}</g:availability>
-      <g:price>${Math.round(price)} ${CURRENCY}</g:price>
+      <g:price>${Math.round((price * UGX_PER_RWF) / 100) * 100} ${CURRENCY}</g:price>
       <g:condition>new</g:condition>
       <g:brand>${esc(clean(p.brand) || "Karibu")}</g:brand>
       <g:identifier_exists>no</g:identifier_exists>
