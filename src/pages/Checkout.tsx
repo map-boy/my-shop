@@ -1,3 +1,4 @@
+import { getRef } from '../lib/agent';
 import { useI18n } from '../lib/i18n';
 // FILE: src/pages/Checkout.tsx
 import React, { useMemo, useState } from 'react';
@@ -134,6 +135,7 @@ const Checkout: React.FC = () => {
       discount,
       total,
       couponCode: coupon?.code ?? '',
+      agentCode: getRef(),
       customerName: form.name.trim(),
       customerEmail: form.email.trim().toLowerCase(),
       customerPhone: form.phone.trim(),

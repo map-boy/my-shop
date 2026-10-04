@@ -195,6 +195,48 @@ service cloud.firestore {
       allow write: if managesEverything();
     }
 
+    // --- Affiliate agents ---------------------------------------------------
+    // Admin-managed. Visitors may only create/extend their own visit row, and
+    // activeSec can never grow faster than real server time (request.time).
+    match /agents/{code} {
+      allow read, write: if managesEverything();
+    }
+    match /agentVisits/{id} {
+      allow read, delete: if managesEverything();
+      allow create: if request.resource.data.keys().hasOnly(['code','vid','day','startedAt','lastAt','lastServer','activeSec','pages','productViews','scrolled','waClicks','landing','ua'])
+                    && id == request.resource.data.vid + '__' + request.resource.data.code + '__' + request.resource.data.day
+                    && request.resource.data.code.size() <= 24
+                    && request.resource.data.vid.size() <= 40
+                    && request.resource.data.lastServer == request.time
+                    && request.resource.data.activeSec == 0
+                    && request.resource.data.get('pages', 0) <= 1
+                    && request.resource.data.get('productViews', 0) <= 1
+                    && request.resource.data.get('waClicks', 0) <= 1
+                    && exists(/databases/$(database)/documents/agents/$(request.resource.data.code))
+                    && get(/databases/$(database)/documents/agents/$(request.resource.data.code)).data.get('active', false) == true;
+      allow update: if managesEverything()
+                    || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastAt','lastServer','activeSec','pages','productViews','scrolled','waClicks'])
+                        && request.resource.data.lastServer == request.time
+                        && request.resource.data.activeSec - resource.data.activeSec >= 0
+                        && request.resource.data.activeSec - resource.data.activeSec <= (request.time.toMillis() - resource.data.lastServer.toMillis()) / 1000 + 2
+                        && request.resource.data.pages - resource.data.pages <= 1
+                        && request.resource.data.productViews - resource.data.productViews <= 1
+                        && request.resource.data.waClicks - resource.data.waClicks <= 1);
+    }
+    match /agentLeads/{id} {
+      allow read, update, delete: if managesEverything();
+      allow create: if managesEverything()
+                    || (request.resource.data.keys().hasOnly(['code','vid','productId','productName','price','qty','status','amount','note','createdAt'])
+                        && request.resource.data.status == 'lead'
+                        && request.resource.data.amount == 0
+                        && request.resource.data.code.size() <= 24
+                        && exists(/databases/$(database)/documents/agents/$(request.resource.data.code))
+                        && get(/databases/$(database)/documents/agents/$(request.resource.data.code)).data.get('active', false) == true);
+    }
+    match /agentPayouts/{id} {
+      allow read, write: if managesEverything();
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

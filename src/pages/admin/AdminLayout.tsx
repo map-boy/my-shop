@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, NavLink, Navigate, Outlet, useLocation } from 'react-router-dom';
 import {
-  BadgePercent, BarChart3, Bell, BookOpen, Boxes, ExternalLink, LayoutDashboard, LayoutGrid, LayoutTemplate, LogOut, Mail,
+  BadgePercent, BarChart3, Handshake, Bell, BookOpen, Boxes, ExternalLink, LayoutDashboard, LayoutGrid, LayoutTemplate, LogOut, Mail,
   Menu, Package, Settings as SettingsIcon, ShoppingCart, Store, Tags, Users, UserCog, X,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -96,6 +96,7 @@ const AdminLayout: React.FC = () => {
         { to: '/admin/shop-profile', label: 'My shop', icon: Store, sellerOnly: true },
         { to: '/admin/home-builder', label: 'Home builder', icon: LayoutTemplate, platformOnly: true },
         { to: '/admin/blog', label: 'Blog', icon: BookOpen, platformOnly: true },
+        { to: '/admin/agents', label: 'Agents', icon: Handshake, platformOnly: true },
         { to: '/admin/settings', label: 'Store settings', icon: SettingsIcon, platformOnly: true },
         { to: '/admin/team', label: 'Sellers & access', icon: UserCog, platformOnly: true },
       ],

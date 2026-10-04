@@ -33,6 +33,7 @@ import SectionShelves from './components/SectionShelves';
 import SectionPage from './pages/SectionPage';
 import SellerShop from './pages/SellerShop';
 import Tracker from './components/Tracker';
+import AgentTracker from './components/AgentTracker';
 import PushPrompt from './components/PushPrompt';
 import { L10n } from './lib/i18n';
 
@@ -55,6 +56,7 @@ const ShopProfile = React.lazy(() => import('./pages/admin/ShopProfile'));
 const AdminTraffic = React.lazy(() => import('./pages/admin/AdminTraffic'));
 const AdminNotify = React.lazy(() => import('./pages/admin/AdminNotify'));
 const AdminBlog = React.lazy(() => import('./pages/admin/AdminBlog'));
+const AdminAgents = React.lazy(() => import('./pages/admin/AdminAgents'));
 
 const CanonicalTag: React.FC = () => {
   const { pathname } = useLocation();
@@ -142,6 +144,7 @@ const App: React.FC = () => (
             <ScrollToTop />
 <CanonicalTag />
             <Tracker />
+            <AgentTracker />
             <PushPrompt />
             <ErrorBoundary>
             <React.Suspense fallback={<PageLoader />}>
@@ -194,6 +197,7 @@ const App: React.FC = () => (
                 <Route path="/admin/traffic" element={<AdminTraffic />} />
                 <Route path="/admin/notify" element={<AdminNotify />} />
                 <Route path="/admin/blog" element={<PlatformOnly><AdminBlog /></PlatformOnly>} />
+                <Route path="/admin/agents" element={<PlatformOnly><AdminAgents /></PlatformOnly>} />
               </Route>
 
               <Route path="/admin/*" element={<Navigate to="/admin/dashboard" replace />} />

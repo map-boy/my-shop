@@ -1,3 +1,4 @@
+import { getRef, logAgentLead } from '../lib/agent';
 // FILE: src/pages/ProductDetail.tsx
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
@@ -148,7 +149,7 @@ const ProductDetail: React.FC = () => {
   const waText =
     tr('waMessage', { name: product.name, qty, price: money(product.price * qty) }) +
     (variantText ? '\n' + variantText : '') +
-    '\n' + productUrl;
+    '\n' + productUrl + (getRef() ? '\nRef: ' + getRef() : '');
   const waHref = waNumber ? `https://wa.me/${waNumber}?text=${encodeURIComponent(waText)}` : '';
 
   return (
@@ -273,7 +274,7 @@ const ProductDetail: React.FC = () => {
                 </div>
               </div>
               {waHref && (
-                <a href={waHref}
+                <a href={waHref} onClickCapture={() => { if (!soldOut && !missingChoice) logAgentLead({ id: product.id, name: product.name, price: product.price, qty }); }}
                   target="_blank"
                   rel="noreferrer"
                   onClick={(e) => {

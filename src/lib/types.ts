@@ -107,6 +107,8 @@ export interface Order {
   discount: number;
   total: number;
   couponCode: string;
+  /** Affiliate agent who referred this order. */
+  agentCode?: string;
   customerName: string;
   customerEmail: string;
   customerPhone: string;
