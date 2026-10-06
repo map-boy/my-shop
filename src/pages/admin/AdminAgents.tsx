@@ -18,7 +18,7 @@ interface Lead { id: string; code: string; productName?: string; qty?: number; p
 interface Payout { id: string; code: string; amount: number; note: string; paidAt: number; by: string }
 
 const BOT = /bot|crawl|spider|headless|lighthouse|preview|facebookexternalhit|whatsapp/i;
-const BLANK = { code: '', email: '', name: '', phone: '', notes: '', active: true, perVisit: 50, commissionPct: 5, minActiveSec: 30, dailyCap: 50 };
+const BLANK = { code: '', email: '', name: '', phone: '', notes: '', active: true, perVisit: 100, commissionPct: 5, minActiveSec: 30, dailyCap: 50 };
 const dt = (n: number) => (n ? new Date(n).toLocaleString() : '-');
 const isQ = (v: Visit, a: Agent) => !v.voided && !BOT.test(v.ua || '') && v.activeSec >= a.minActiveSec && (v.productViews > 0 || v.scrolled || v.pages >= 2);
 const countsOrder = (o: Order) => o.status !== 'cancelled' && o.status !== 'refunded' && (o.status === 'delivered' || o.paymentStatus === 'paid');
@@ -62,11 +62,13 @@ const AdminAgents: React.FC = () => {
     agents.forEach((a) => {
       const vs = visits.filter((v) => v.code === a.code);
       const counted = new Set<string>();
+      const seenV = new Set<string>();
       const perDay: Record<string, number> = {};
       [...vs].sort((x, y) => x.startedAt - y.startedAt).forEach((v) => {
         if (!isQ(v, a)) return;
+        if (seenV.has(v.id.split('__')[0])) return;
         const n = perDay[v.day] ?? 0;
-        if (!a.dailyCap || n < a.dailyCap) { perDay[v.day] = n + 1; counted.add(v.id); }
+        if (!a.dailyCap || n < a.dailyCap) { perDay[v.day] = n + 1; counted.add(v.id); seenV.add(v.id.split('__')[0]); }
       });
       const active = vs.reduce((s, v) => s + v.activeSec, 0);
       const mine = leads.filter((l) => l.code === a.code);
@@ -156,7 +158,7 @@ const AdminAgents: React.FC = () => {
   };
 
   const vStatus = (v: Visit, a: Agent, counted: Set<string>) =>
-    v.voided ? 'voided' : BOT.test(v.ua || '') ? 'bot' : counted.has(v.id) ? 'paid visit' : isQ(v, a) ? 'over daily cap' : 'too short / no activity';
+    v.voided ? 'voided' : BOT.test(v.ua || '') ? 'bot' : counted.has(v.id) ? 'paid visit' : isQ(v, a) ? ([...counted].some((c) => c.split('__')[0] === v.id.split('__')[0]) ? 'returning visitor (already paid)' : 'over daily cap') : 'too short / no activity';
 
   return (
     <div className="space-y-6">
@@ -210,7 +212,7 @@ const AdminAgents: React.FC = () => {
               <div>
                 <h2 className="font-display text-xl font-bold text-white">{A.name} <span className="font-mono text-sm text-accent">{A.code}</span></h2>
                 <p className="mt-1 break-all font-mono text-[12px] text-ink-400">{linkOf(A)}</p>
-                <p className="mt-2 text-[12px] text-ink-500">Rule: {money(A.perVisit)} per qualified visit (min {A.minActiveSec}s active and a product view, scroll or 2 pages, max {A.dailyCap || 'unlimited'}/day) + {A.commissionPct}% of confirmed sales.</p>
+                <p className="mt-2 text-[12px] text-ink-500">Rule: {money(A.perVisit)} per new qualified visitor, paid once per device (min {A.minActiveSec}s active and a product view, scroll or 2 pages, max {A.dailyCap || 'unlimited'}/day) + {A.commissionPct}% of confirmed sales.</p>
               </div>
               <div className="text-right text-[13px] text-ink-300">
                 <p>Visits pay: <b className="text-white">{money(S.visitPay)}</b></p>
@@ -303,7 +305,7 @@ const AdminAgents: React.FC = () => {
           </div>
           <Field label="Phone (WhatsApp)"><Input value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} /></Field>
           <div className="grid gap-5 sm:grid-cols-2">
-            <Field label="Pay per qualified visit"><Input type="number" min={0} value={form.perVisit} onChange={(e) => setForm((f) => ({ ...f, perVisit: Number(e.target.value) }))} /></Field>
+            <Field label="Pay per NEW qualified visitor (paid once per device)"><Input type="number" min={0} value={form.perVisit} onChange={(e) => setForm((f) => ({ ...f, perVisit: Number(e.target.value) }))} /></Field>
             <Field label="Agent Google e-mail (dashboard login)" hint="The agent signs in at /agent with this account. Their referral link is separate: /?ref=CODE."><Input type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} /></Field>
                 <Field label="Commission % on confirmed sales"><Input type="number" min={0} max={100} value={form.commissionPct} onChange={(e) => setForm((f) => ({ ...f, commissionPct: Number(e.target.value) }))} /></Field>
             <Field label="Minimum active seconds" hint="Time the tab is open AND the visitor is interacting."><Input type="number" min={0} value={form.minActiveSec} onChange={(e) => setForm((f) => ({ ...f, minActiveSec: Number(e.target.value) }))} /></Field>

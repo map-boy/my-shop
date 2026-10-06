@@ -94,11 +94,13 @@ const AgentDashboard: React.FC = () => {
     if (!agent) return null;
     const perDay = new Map<string, number>();
     let counted = 0;
+    const seenV = new Set<string>();
     [...visits].sort((a, b) => a.startedAt - b.startedAt).forEach((v) => {
       if (!isQ(v, agent)) return;
+      if (seenV.has(v.id.split('__')[0])) return;
       const n = perDay.get(v.day) ?? 0;
       if (agent.dailyCap > 0 && n >= agent.dailyCap) return;
-      perDay.set(v.day, n + 1); counted += 1;
+      perDay.set(v.day, n + 1); counted += 1; seenV.add(v.id.split('__')[0]);
     });
     const sales = leads.filter((l) => l.status === 'sold').reduce((s, l) => s + (l.amount || 0), 0) + (agent.orderSales || 0);
     const commission = Math.round((sales * (agent.commissionPct || 0)) / 100);
@@ -172,7 +174,7 @@ const AgentDashboard: React.FC = () => {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Stat label="Referrals (visits)" value={String(S.total)} hint={`${S.unique} unique visitors`} />
-        <Stat label="Paid visits" value={String(S.counted)} hint={`${money(agent.perVisit)} each, max ${agent.dailyCap || 'unlimited'}/day`} />
+        <Stat label="Paid visits" value={String(S.counted)} hint={`${money(agent.perVisit)} per new visitor, max ${agent.dailyCap || 'unlimited'}/day`} />
         <Stat label="Avg time active" value={`${S.avg}s`} hint={`Minimum to count: ${agent.minActiveSec}s`} />
         <Stat label="Leads" value={String(leads.length)} hint={`${leads.filter((l) => l.status === 'sold').length} sold`} />
       </div>

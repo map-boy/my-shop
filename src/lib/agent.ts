@@ -44,12 +44,24 @@ export function captureRef(search: string): void {
   } catch { /* ignore */ }
 }
 
+let vidCache = '';
+function readCookie(): string {
+  try { const m = document.cookie.match(/(?:^|; )ag_vid=([A-Za-z0-9]+)/); return m ? m[1] : ''; } catch { return ''; }
+}
+function writeCookie(v: string): void {
+  try { document.cookie = 'ag_vid=' + v + '; max-age=31536000; path=/; SameSite=Lax'; } catch { /* ignore */ }
+}
+// One device = one visitor. The id lives in a 1-year cookie AND localStorage; either one restores the other.
 function visitorId(): string {
-  try {
-    let v = localStorage.getItem('ag.vid');
-    if (!v) { v = (crypto.randomUUID?.() ?? String(Math.random()).slice(2) + Date.now()).replace(/-/g, '').slice(0, 24); localStorage.setItem('ag.vid', v); }
-    return v;
-  } catch { return 'anon' + Math.random().toString(36).slice(2, 10); }
+  if (vidCache) return vidCache;
+  let v = '';
+  try { v = localStorage.getItem('ag.vid') || ''; } catch { /* ignore */ }
+  if (!v) v = readCookie();
+  if (!v) v = (crypto.randomUUID?.() ?? String(Math.random()).slice(2) + Date.now()).replace(/-/g, '').slice(0, 24);
+  try { localStorage.setItem('ag.vid', v); } catch { /* ignore */ }
+  writeCookie(v);
+  vidCache = v;
+  return v;
 }
 
 function push(extra: Record<string, unknown>): void {
