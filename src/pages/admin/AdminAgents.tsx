@@ -12,13 +12,13 @@ import { Button, ConfirmDialog, EmptyState, Field, Input, Modal, Toggle } from '
 import { errorMessage } from '../../lib/utils';
 import type { Order } from '../../lib/types';
 
-interface Agent { id: string; code: string; email?: string; orderSales?: number; name: string; phone: string; notes: string; active: boolean; perVisit: number; commissionPct: number; minActiveSec: number; dailyCap: number; createdAt: number }
+interface Agent { id: string; code: string; email?: string; orderSales?: number; name: string; phone: string; notes: string; active: boolean; perVisit: number; commissionPerSale?: number; orderCount?: number; commissionPct?: number; minActiveSec: number; dailyCap: number; createdAt: number }
 interface Visit { id: string; code: string; day: string; startedAt: number; activeSec: number; pages: number; productViews: number; scrolled: boolean; waClicks: number; landing?: string; ua?: string; voided?: boolean }
 interface Lead { id: string; code: string; productName?: string; qty?: number; price?: number; status: 'lead' | 'sold' | 'rejected'; amount: number; note?: string; createdAt: number }
 interface Payout { id: string; code: string; amount: number; note: string; paidAt: number; by: string }
 
 const BOT = /bot|crawl|spider|headless|lighthouse|preview|facebookexternalhit|whatsapp/i;
-const BLANK = { code: '', email: '', name: '', phone: '', notes: '', active: true, perVisit: 100, commissionPct: 5, minActiveSec: 30, dailyCap: 50 };
+const BLANK = { code: '', email: '', name: '', phone: '', notes: '', active: true, perVisit: 100, commissionPerSale: 0, minActiveSec: 30, dailyCap: 50 };
 const dt = (n: number) => (n ? new Date(n).toLocaleString() : '-');
 const isQ = (v: Visit, a: Agent) => !v.voided && !BOT.test(v.ua || '') && v.activeSec >= a.minActiveSec && (v.productViews > 0 || v.scrolled || v.pages >= 2);
 const countsOrder = (o: Order) => o.status !== 'cancelled' && o.status !== 'refunded' && (o.status === 'delivered' || o.paymentStatus === 'paid');
@@ -75,8 +75,9 @@ const AdminAgents: React.FC = () => {
       const sold = mine.filter((l) => l.status === 'sold').reduce((s, l) => s + (l.amount || 0), 0);
       const ord = orders.filter((o) => o.agentCode === a.code && countsOrder(o)).reduce((s, o) => s + o.total, 0);
       const sales = sold + ord;
+      const nSales = mine.filter((l) => l.status === 'sold').length + orders.filter((o) => o.agentCode === a.code && countsOrder(o)).length;
       const visitPay = counted.size * (a.perVisit || 0);
-      const commission = Math.round((sales * (a.commissionPct || 0)) / 100);
+      const commission = nSales * (a.commissionPerSale || 0);
       const paid = payouts.filter((p) => p.code === a.code).reduce((s, p) => s + (p.amount || 0), 0);
       out[a.code] = { vs, counted, qualified: counted.size, avg: vs.length ? Math.round(active / vs.length) : 0, leadsN: mine.length, sales, visitPay, commission, earned: visitPay + commission, paid, balance: visitPay + commission - paid };
     });
@@ -88,7 +89,7 @@ const AdminAgents: React.FC = () => {
     if (!orders.length) return;
     agents.forEach((a) => {
       const os = orders.filter((o) => o.agentCode === a.code && countsOrder(o)).reduce((s, o) => s + o.total, 0);
-      if ((a.orderSales ?? -1) !== os) void setDoc(doc(db, 'agents', a.code), { orderSales: os }, { merge: true }).catch(() => undefined);
+      if ((a.orderSales ?? -1) !== os || (a.orderCount ?? -1) !== orders.filter((o) => o.agentCode === a.code && countsOrder(o)).length) void setDoc(doc(db, 'agents', a.code), { orderSales: os, orderCount: orders.filter((o) => o.agentCode === a.code && countsOrder(o)).length }, { merge: true }).catch(() => undefined);
     });
   }, [agents, orders]);
 
@@ -102,7 +103,7 @@ const AdminAgents: React.FC = () => {
   const openNew = () => { setEditing(null); setForm(BLANK); setOpen(true); };
   const openEdit = (a: Agent) => {
     setEditing(a);
-    setForm({ code: a.code, email: a.email || '', name: a.name, phone: a.phone || '', notes: a.notes || '', active: a.active, perVisit: a.perVisit, commissionPct: a.commissionPct, minActiveSec: a.minActiveSec, dailyCap: a.dailyCap });
+    setForm({ code: a.code, email: a.email || '', name: a.name, phone: a.phone || '', notes: a.notes || '', active: a.active, perVisit: a.perVisit, commissionPerSale: a.commissionPerSale || 0, minActiveSec: a.minActiveSec, dailyCap: a.dailyCap });
     setOpen(true);
   };
 
@@ -116,7 +117,7 @@ const AdminAgents: React.FC = () => {
     try {
       await setDoc(doc(db, 'agents', code), {
         code, name, phone: form.phone.trim(), notes: form.notes.trim(), active: form.active,
-        email: (form.email || '').trim().toLowerCase(), perVisit: Number(form.perVisit) || 0, commissionPct: Number(form.commissionPct) || 0,
+        email: (form.email || '').trim().toLowerCase(), perVisit: Number(form.perVisit) || 0, commissionPerSale: Number(form.commissionPerSale) || 0,
         minActiveSec: Number(form.minActiveSec) || 0, dailyCap: Number(form.dailyCap) || 0,
         createdAt: editing?.createdAt ?? Date.now(),
       }, { merge: true });
@@ -212,7 +213,7 @@ const AdminAgents: React.FC = () => {
               <div>
                 <h2 className="font-display text-xl font-bold text-white">{A.name} <span className="font-mono text-sm text-accent">{A.code}</span></h2>
                 <p className="mt-1 break-all font-mono text-[12px] text-ink-400">{linkOf(A)}</p>
-                <p className="mt-2 text-[12px] text-ink-500">Rule: {money(A.perVisit)} per new qualified visitor, paid once per device (min {A.minActiveSec}s active and a product view, scroll or 2 pages, max {A.dailyCap || 'unlimited'}/day) + {A.commissionPct}% of confirmed sales.</p>
+                <p className="mt-2 text-[12px] text-ink-500">Rule: {money(A.perVisit)} per new qualified visitor, paid once per device (min {A.minActiveSec}s active and a product view, scroll or 2 pages, max {A.dailyCap || 'unlimited'}/day) + {money(A.commissionPerSale || 0)} per confirmed sale.</p>
               </div>
               <div className="text-right text-[13px] text-ink-300">
                 <p>Visits pay: <b className="text-white">{money(S.visitPay)}</b></p>
@@ -307,7 +308,7 @@ const AdminAgents: React.FC = () => {
           <div className="grid gap-5 sm:grid-cols-2">
             <Field label="Pay per NEW qualified visitor (paid once per device)"><Input type="number" min={0} value={form.perVisit} onChange={(e) => setForm((f) => ({ ...f, perVisit: Number(e.target.value) }))} /></Field>
             <Field label="Agent Google e-mail (dashboard login)" hint="The agent signs in at /agent with this account. Their referral link is separate: /?ref=CODE."><Input type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} /></Field>
-                <Field label="Commission % on confirmed sales"><Input type="number" min={0} max={100} value={form.commissionPct} onChange={(e) => setForm((f) => ({ ...f, commissionPct: Number(e.target.value) }))} /></Field>
+                <Field label="Commission per confirmed sale (amount)"><Input type="number" min={0} value={form.commissionPerSale} onChange={(e) => setForm((f) => ({ ...f, commissionPerSale: Number(e.target.value) }))} /></Field>
             <Field label="Minimum active seconds" hint="Time the tab is open AND the visitor is interacting."><Input type="number" min={0} value={form.minActiveSec} onChange={(e) => setForm((f) => ({ ...f, minActiveSec: Number(e.target.value) }))} /></Field>
             <Field label="Max paid visits per day" hint="0 means unlimited."><Input type="number" min={0} value={form.dailyCap} onChange={(e) => setForm((f) => ({ ...f, dailyCap: Number(e.target.value) }))} /></Field>
           </div>

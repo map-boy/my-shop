@@ -11,7 +11,7 @@ import { useToast } from '../context/ToastContext';
 import { Button, Spinner } from '../components/ui';
 import { errorMessage } from '../lib/utils';
 
-interface Agent { id: string; code: string; name: string; email?: string; active: boolean; perVisit: number; commissionPct: number; minActiveSec: number; dailyCap: number; orderSales?: number }
+interface Agent { id: string; code: string; name: string; email?: string; active: boolean; perVisit: number; commissionPct?: number; commissionPerSale?: number; orderCount?: number; minActiveSec: number; dailyCap: number; orderSales?: number }
 interface Visit { id: string; code: string; day: string; startedAt: number; activeSec: number; pages: number; productViews: number; scrolled: boolean; waClicks: number; ua?: string; voided?: boolean }
 interface Lead { id: string; code: string; productName?: string; status: 'lead' | 'sold' | 'rejected'; amount: number; createdAt: number }
 interface Payout { id: string; code: string; amount: number; note: string; paidAt: number }
@@ -103,7 +103,8 @@ const AgentDashboard: React.FC = () => {
       perDay.set(v.day, n + 1); counted += 1; seenV.add(v.id.split('__')[0]);
     });
     const sales = leads.filter((l) => l.status === 'sold').reduce((s, l) => s + (l.amount || 0), 0) + (agent.orderSales || 0);
-    const commission = Math.round((sales * (agent.commissionPct || 0)) / 100);
+    const soldN = leads.filter((l) => l.status === 'sold').length + (agent.orderCount || 0);
+    const commission = soldN * (agent.commissionPerSale || 0);
     const visitPay = counted * (agent.perVisit || 0);
     const earned = visitPay + commission;
     const paid = payouts.reduce((s, p) => s + (p.amount || 0), 0);
@@ -169,7 +170,7 @@ const AgentDashboard: React.FC = () => {
         <Stat label="Earned" value={money(S.earned)} hint={`Visits ${money(S.visitPay)} + commission ${money(S.commission)}`} />
         <Stat label="Paid to you" value={money(S.paid)} />
         <Stat label="Balance owed" value={money(S.balance)} />
-        <Stat label="Confirmed sales" value={money(S.sales)} hint={`${agent.commissionPct}% commission`} />
+        <Stat label="Confirmed sales" value={money(S.sales)} hint={`${money(agent.commissionPerSale || 0)} per confirmed sale`} />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
