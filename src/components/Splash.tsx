@@ -7,14 +7,18 @@ import { useSections } from '../lib/sections';
 
 type Phase = 'loading' | 'smile' | 'out' | 'gone';
 
+const BRAND = 'KARIBU FIT';
+
 const CSS = `
 @keyframes ks-rot{to{transform:rotate(360deg)}}
 @keyframes ks-bounce{0%,80%,100%{transform:translateY(0);opacity:.45}40%{transform:translateY(-9px);opacity:1}}
 @keyframes ks-blink{0%,90%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+@keyframes ks-wave{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-12px)}}
+.ks-ltr{display:inline-block;animation:ks-wave 1.3s ease-in-out infinite}
 .ks-ring{transform-origin:60px 60px;animation:ks-rot 1.1s linear infinite}
 .ks-dot{animation:ks-bounce 1s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
 .ks-eye{transform-box:fill-box;transform-origin:center;animation:ks-blink 2.2s ease-in-out 1.2s infinite}
-@media (prefers-reduced-motion:reduce){.ks-ring,.ks-dot,.ks-eye{animation:none}}
+@media (prefers-reduced-motion:reduce){.ks-ring,.ks-dot,.ks-eye,.ks-ltr{animation:none}}
 `;
 
 const Splash: React.FC = () => {
@@ -84,8 +88,13 @@ const Splash: React.FC = () => {
           />
         </g>
       </svg>
-      <p style={{ margin: 0, font: '700 12px/1 system-ui,sans-serif', letterSpacing: '.28em', textTransform: 'uppercase', color: '#a5a19a' }}>
-        {smiling ? 'Karibu' : 'Loading'}
+      <p style={{ margin: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, fontFamily: 'var(--heading-font, "Playfair Display", Georgia, serif)', fontWeight: 800, fontSize: 'clamp(34px, 11vw, 64px)', lineHeight: 1, letterSpacing: '.06em', color: '#171614' }}>
+        <span style={{ display: 'flex' }}>
+          {BRAND.split('').map((c, i) => (
+            <span key={i} className={smiling ? '' : 'ks-ltr'} style={{ animationDelay: i * 0.08 + 's', whiteSpace: 'pre', color: smiling ? 'var(--accent, #e0b34d)' : '#171614', transition: 'color .4s ease' }}>{c}</span>
+          ))}
+        </span>
+        <span style={{ fontFamily: 'system-ui,sans-serif', fontSize: 12, fontWeight: 700, letterSpacing: '.28em', textTransform: 'uppercase', color: '#a5a19a' }}>{smiling ? 'Welcome' : 'Loading'}</span>
       </p>
     </div>
   );
