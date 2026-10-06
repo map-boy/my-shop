@@ -14,6 +14,8 @@ interface StoreState {
   /** Only `active` products — what shoppers are allowed to see. */
   liveProducts: Product[];
   loading: boolean;
+  /** True once settings AND products have answered from Firestore. */
+  ready: boolean;
   /** Set when Firestore cannot be reached, so the UI can explain itself. */
   error: string | null;
   money: (amount: number) => string;
@@ -28,6 +30,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [settingsReady, setSettingsReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [displayCurrency, setDisplayCurrencyState] = useState<DisplayCurrency>(() => loadCurrency() || 'RWF');
   const setDisplayCurrency = (c: DisplayCurrency) => { setDisplayCurrencyState(c); saveCurrency(c); };
@@ -40,8 +43,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     () =>
       onSnapshot(
         doc(db, 'settings', 'store'),
-        (snap) => setSettings(mergeSettings(snap.exists() ? (snap.data() as StoreSettings) : null)),
-        (err) => setError(err.message),
+        (snap) => { setSettings(mergeSettings(snap.exists() ? (snap.data() as StoreSettings) : null)); setSettingsReady(true); },
+        (err) => { setError(err.message); setSettingsReady(true); },
       ),
     [],
   );
@@ -95,6 +98,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       categories,
       products,
       liveProducts: products.filter((p) => p.status === 'active'),
+      ready: settingsReady && !loading,
       displayCurrency,
       setDisplayCurrency,
       loading,
@@ -106,7 +110,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           locale: settings.locale,
         }),
     }),
-    [settings, categories, products, loading, error, displayCurrency],
+    [settings, categories, products, loading, settingsReady, error, displayCurrency],
   );
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;

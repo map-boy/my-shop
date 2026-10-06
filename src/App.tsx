@@ -30,6 +30,7 @@ import BlogPost from './pages/BlogPost';
 import { PageLoader } from './components/ui';
 import SectionsBar from './components/SectionsBar';
 import SectionShelves from './components/SectionShelves';
+import Splash from './components/Splash';
 import SectionPage from './pages/SectionPage';
 import SellerShop from './pages/SellerShop';
 import Tracker from './components/Tracker';
@@ -143,6 +144,7 @@ const App: React.FC = () => (
         <StoreProvider>
           <LanguageProvider><CartProvider>
             <ScrollToTop />
+            <Splash />
 <CanonicalTag />
             <Tracker />
             <AgentTracker />
