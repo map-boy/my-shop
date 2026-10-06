@@ -57,6 +57,7 @@ const AdminTraffic = React.lazy(() => import('./pages/admin/AdminTraffic'));
 const AdminNotify = React.lazy(() => import('./pages/admin/AdminNotify'));
 const AdminBlog = React.lazy(() => import('./pages/admin/AdminBlog'));
 const AdminAgents = React.lazy(() => import('./pages/admin/AdminAgents'));
+const AgentDashboard = React.lazy(() => import('./pages/AgentDashboard'));
 
 const CanonicalTag: React.FC = () => {
   const { pathname } = useLocation();
@@ -169,7 +170,8 @@ const App: React.FC = () => (
                 <Route path="/cookies" element={<Legal kind="cookies" />} />
                 <Route path="/blog" element={<Blog />} />
                 <Route path="/blog/:slug" element={<BlogPost />} />
-                <Route path="*" element={<NotFound />} />
+                <Route path="/agent" element={<AgentDashboard />} />
+          <Route path="*" element={<NotFound />} />
               </Route>
 
               {/* Dashboard */}

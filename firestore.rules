@@ -68,6 +68,14 @@ service cloud.firestore {
       );
     }
 
+    // An affiliate agent signs in with the Google account stored in agents/{code}.email.
+    function isAgentOf(code) {
+      return signedIn()
+        && code is string && code.size() > 0 && code.size() <= 24
+        && exists(/databases/$(database)/documents/agents/$(code))
+        && get(/databases/$(database)/documents/agents/$(code)).data.get('email', '') == email();
+    }
+
     // --- Administrators -----------------------------------------------------
     match /admins/{adminEmail} {
       // The owner sees the whole roster. Everyone else sees only themselves,
@@ -199,10 +207,13 @@ service cloud.firestore {
     // Admin-managed. Visitors may only create/extend their own visit row, and
     // activeSec can never grow faster than real server time (request.time).
     match /agents/{code} {
-      allow read, write: if managesEverything();
+      // Admin sees all. An agent sees only the profile carrying their own e-mail.
+      allow read: if managesEverything() || (signedIn() && resource.data.get('email', '') == email());
+      allow write: if managesEverything();
     }
     match /agentVisits/{id} {
-      allow read, delete: if managesEverything();
+      allow read: if managesEverything() || isAgentOf(resource.data.code);
+      allow delete: if managesEverything();
       allow create: if request.resource.data.keys().hasOnly(['code','vid','day','startedAt','lastAt','lastServer','activeSec','pages','productViews','scrolled','waClicks','landing','ua'])
                     && id == request.resource.data.vid + '__' + request.resource.data.code + '__' + request.resource.data.day
                     && request.resource.data.code.size() <= 24
@@ -224,7 +235,8 @@ service cloud.firestore {
                         && request.resource.data.waClicks - resource.data.waClicks <= 1);
     }
     match /agentLeads/{id} {
-      allow read, update, delete: if managesEverything();
+      allow read: if managesEverything() || isAgentOf(resource.data.code);
+      allow update, delete: if managesEverything();
       allow create: if managesEverything()
                     || (request.resource.data.keys().hasOnly(['code','vid','productId','productName','price','qty','status','amount','note','createdAt'])
                         && request.resource.data.status == 'lead'
@@ -234,7 +246,8 @@ service cloud.firestore {
                         && get(/databases/$(database)/documents/agents/$(request.resource.data.code)).data.get('active', false) == true);
     }
     match /agentPayouts/{id} {
-      allow read, write: if managesEverything();
+      allow read: if managesEverything() || isAgentOf(resource.data.code);
+      allow write: if managesEverything();
     }
 
     match /{document=**} {
