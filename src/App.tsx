@@ -59,6 +59,8 @@ const AdminNotify = React.lazy(() => import('./pages/admin/AdminNotify'));
 const AdminBlog = React.lazy(() => import('./pages/admin/AdminBlog'));
 const AdminAgents = React.lazy(() => import('./pages/admin/AdminAgents'));
 const AgentDashboard = React.lazy(() => import('./pages/AgentDashboard'));
+const AgentProgram = React.lazy(() => import('./pages/AgentProgram'));
+const AdminApplications = React.lazy(() => import('./pages/admin/AdminApplications'));
 
 const CanonicalTag: React.FC = () => {
   const { pathname } = useLocation();
@@ -173,6 +175,7 @@ const App: React.FC = () => (
                 <Route path="/blog" element={<Blog />} />
                 <Route path="/blog/:slug" element={<BlogPost />} />
                 <Route path="/agent" element={<AgentDashboard />} />
+                <Route path="/agents" element={<AgentProgram />} />
           <Route path="*" element={<NotFound />} />
               </Route>
 
@@ -201,6 +204,7 @@ const App: React.FC = () => (
                 <Route path="/admin/traffic" element={<AdminTraffic />} />
                 <Route path="/admin/notify" element={<AdminNotify />} />
                 <Route path="/admin/blog" element={<PlatformOnly><AdminBlog /></PlatformOnly>} />
+                <Route path="/admin/applications" element={<PlatformOnly><AdminApplications /></PlatformOnly>} />
                 <Route path="/admin/agents" element={<PlatformOnly><AdminAgents /></PlatformOnly>} />
               </Route>
 

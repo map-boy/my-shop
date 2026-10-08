@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { getApp } from 'firebase/app';
 import { GoogleAuthProvider, getAuth, onAuthStateChanged, signInWithPopup, signOut, type User } from 'firebase/auth';
-import { collection, onSnapshot, query, where } from 'firebase/firestore';
+import { collection, doc, onSnapshot, query, where } from 'firebase/firestore';
 import { Bell, Copy, LogOut } from 'lucide-react';
 import { db } from '../lib/firebase';
 import { useStore } from '../context/StoreContext';
@@ -11,7 +11,7 @@ import { useToast } from '../context/ToastContext';
 import { Button, Spinner } from '../components/ui';
 import { errorMessage } from '../lib/utils';
 
-interface Agent { id: string; code: string; name: string; email?: string; active: boolean; perVisit: number; commissionPct?: number; commissionPerSale?: number; orderCount?: number; minActiveSec: number; dailyCap: number; orderSales?: number }
+interface Agent { adminMessage?: string; id: string; code: string; name: string; email?: string; active: boolean; perVisit: number; commissionPct?: number; commissionPerSale?: number; orderCount?: number; minActiveSec: number; dailyCap: number; orderSales?: number }
 interface Visit { id: string; code: string; day: string; startedAt: number; activeSec: number; pages: number; productViews: number; scrolled: boolean; waClicks: number; ua?: string; voided?: boolean }
 interface Lead { id: string; code: string; productName?: string; status: 'lead' | 'sold' | 'rejected'; amount: number; createdAt: number }
 interface Payout { id: string; code: string; amount: number; note: string; paidAt: number }
@@ -49,6 +49,7 @@ const AgentDashboard: React.FC = () => {
   const [visits, setVisits] = useState<Visit[]>([]);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [payouts, setPayouts] = useState<Payout[]>([]);
+  const [progMsg, setProgMsg] = useState('');
   const [perm, setPerm] = useState<string>(typeof Notification !== 'undefined' ? Notification.permission : 'unsupported');
 
   const notifyRef = useRef<(m: string) => void>(() => undefined);
@@ -60,6 +61,8 @@ const AgentDashboard: React.FC = () => {
   useEffect(() => onAuthStateChanged(getAuth(getApp()), (u) => { setUser(u); setReady(true); }), []);
 
   const email = (user?.email ?? '').toLowerCase();
+
+  useEffect(() => onSnapshot(doc(db, 'agentProgram', 'config'), (s) => setProgMsg(String((s.data() as { message?: string } | undefined)?.message ?? '')), () => setProgMsg('')), []);
 
   useEffect(() => {
     setAgent(null); setAgentLoaded(false);
@@ -156,6 +159,14 @@ const AgentDashboard: React.FC = () => {
           <Button size="sm" icon={<LogOut size={14} />} onClick={() => void signOut(getAuth(getApp()))}>Sign out</Button>
         </div>
       </header>
+
+      {(progMsg || agent.adminMessage) && (
+        <section className="rounded-2xl border border-amber-300 bg-amber-50 p-5">
+          <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-amber-700">Message from admin</p>
+          {progMsg && <p className="mt-2 whitespace-pre-line text-[14px] text-ink-900">{progMsg}</p>}
+          {agent.adminMessage && <p className="mt-2 whitespace-pre-line text-[14px] font-semibold text-ink-900">{agent.adminMessage}</p>}
+        </section>
+      )}
 
       <section className={card}>
         <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-ink-500">Your referral link (share this)</p>

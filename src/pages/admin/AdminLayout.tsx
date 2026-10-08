@@ -96,6 +96,7 @@ const AdminLayout: React.FC = () => {
         { to: '/admin/shop-profile', label: 'My shop', icon: Store, sellerOnly: true },
         { to: '/admin/home-builder', label: 'Home builder', icon: LayoutTemplate, platformOnly: true },
         { to: '/admin/blog', label: 'Blog', icon: BookOpen, platformOnly: true },
+        { to: '/admin/applications', label: 'Agent applications', icon: Handshake, platformOnly: true },
         { to: '/admin/agents', label: 'Agents', icon: Handshake, platformOnly: true },
         { to: '/admin/settings', label: 'Store settings', icon: SettingsIcon, platformOnly: true },
         { to: '/admin/team', label: 'Sellers & access', icon: UserCog, platformOnly: true },
