@@ -69,7 +69,7 @@ export default async function handler(req, res) {
     res.status(200).send(
       "<!doctype html><html><head><title>My Shop</title>" +
       '<meta property="og:title" content="My Shop" />' +
-      "</head><body>Redirecting…<script>location.href=" + JSON.stringify(pageUrl) + ";</script></body></html>"
+      "</head><body><a href=" + JSON.stringify(pageUrl) + ">My Shop</a></body></html>"
     );
     return;
   }
@@ -101,7 +101,8 @@ export default async function handler(req, res) {
 <meta property="og:site_name" content="Karibu" />
 <meta property="og:url" content="${escapeHtml(pageUrl)}" />
 <meta name="twitter:card" content="summary_large_image" />
-<meta http-equiv="refresh" content="0; url=${escapeHtml(pageUrl)}" />
+<link rel="canonical" href="${escapeHtml(pageUrl)}" />
+<script type="application/ld+json">${JSON.stringify({"@context":"https://schema.org","@type":"Product",name,image:[image],description,url:pageUrl,offers:{"@type":"Offer",url:pageUrl,priceCurrency:"RWF",price:String(Math.round(price)),availability:"https://schema.org/InStock"}}).replace(/</g,"\\u003c")}</script>
 </head>
 <body>
 <a href="${escapeHtml(pageUrl)}">${escapeHtml(name)}</a>
