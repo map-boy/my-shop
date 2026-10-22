@@ -1,3 +1,4 @@
+import { logoSvg } from "./_logo.mjs";
 // FILE: api/blog-ssr.mjs
 // GET /api/blog-ssr?path=/blog  or  ?path=/blog/<slug>
 // Crawler-only server-rendered HTML for the blog (middleware.ts sends bots here; shoppers get the SPA).
@@ -78,7 +79,7 @@ ${img}
 ${ld}
 </head>
 <body style="font-family:system-ui,sans-serif;max-width:720px;margin:0 auto;padding:24px;color:#171614;line-height:1.6">
-<header><a href="/" style="font-weight:700;font-size:20px;color:inherit;text-decoration:none">${esc(storeName)}</a>
+<header><a href="/" style="font-weight:700;font-size:20px;color:inherit;text-decoration:none;display:inline-flex;align-items:center;gap:8px">${logoSvg(26)}${esc(storeName)}</a>
 <nav style="margin-top:8px">${nav}</nav></header>
 <main>
 ${main}

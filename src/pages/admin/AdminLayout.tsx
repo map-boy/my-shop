@@ -1,3 +1,4 @@
+import Logo from '../../components/Logo';
 // FILE: src/pages/admin/AdminLayout.tsx
 import React, { useEffect, useState } from 'react';
 import { Link, NavLink, Navigate, Outlet, useLocation } from 'react-router-dom';
@@ -116,13 +117,7 @@ const AdminLayout: React.FC = () => {
   const Sidebar = (
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-3 border-b border-white/10 px-6 py-6">
-        {settings.logoUrl ? (
-          <img src={settings.logoUrl} alt="" className="h-9 w-9 rounded-lg object-contain" />
-        ) : (
-          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent text-sm font-black text-ink-950">
-            {settings.storeName.slice(0, 1)}
-          </span>
-        )}
+        <Logo className="h-9 w-auto text-white" />
         <div className="min-w-0">
           <p className="truncate font-display text-base font-bold text-white">{settings.storeName}</p>
           <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-ink-500">Dashboard</p>
@@ -227,7 +222,7 @@ const AdminLayout: React.FC = () => {
           >
             <Menu size={20} />
           </button>
-          <span className="font-display text-base font-bold text-white">{settings.storeName}</span>
+          <span className="flex items-center gap-2.5 font-display text-base font-bold text-white"><Logo className="h-7 w-auto text-white" />{settings.storeName}</span>
         </header>
 
         <main className="min-h-screen px-4 py-8 sm:px-6 lg:px-10 lg:py-10">

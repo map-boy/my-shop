@@ -1,3 +1,4 @@
+import Logo from '../../components/Logo';
 // FILE: src/pages/admin/AdminLogin.tsx
 import React, { useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
@@ -55,11 +56,7 @@ const AdminLogin: React.FC = () => {
       <div className="animate-fade-up relative w-full max-w-md">
         <div className="mb-10 text-center">
           <span className="mx-auto mb-7 flex h-16 w-16 items-center justify-center rounded-2xl border border-white/10 bg-white/5">
-            {settings.logoUrl ? (
-              <img src={settings.logoUrl} alt="" className="h-9 w-9 object-contain" />
-            ) : (
-              <ShieldCheck size={28} className="text-accent" />
-            )}
+            <Logo className="h-9 w-auto text-white" />
           </span>
           <h1 className="font-display text-3xl font-bold text-white sm:text-4xl">Control room</h1>
           <p className="mt-3 text-[11px] font-bold uppercase tracking-[0.28em] text-ink-500">

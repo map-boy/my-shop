@@ -1,3 +1,4 @@
+import Logo from './Logo';
 // FILE: src/components/Footer.tsx
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -49,13 +50,7 @@ const Footer: React.FC = () => {
           {/* Brand */}
           <div>
             <div className="mb-5 flex items-center gap-3">
-              {settings.logoUrl ? (
-                <img src={settings.logoUrl} alt="" className="h-10 w-auto object-contain" />
-              ) : (
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent text-sm font-black">
-                  {settings.storeName.slice(0, 1)}
-                </span>
-              )}
+              <Logo className="h-10 w-auto text-white" />
               <span className="font-display text-xl font-bold text-white">{settings.storeName}</span>
             </div>
             <p className="max-w-sm text-sm leading-relaxed text-ink-400">{tx(settings.footer.about)}</p>

@@ -1,3 +1,4 @@
+import Logo from './Logo';
 // FILE: src/components/Navbar.tsx
 import React, { useEffect, useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
@@ -84,13 +85,7 @@ const Navbar: React.FC = () => {
           </button>
 
           <Link to="/" className="flex shrink-0 items-center gap-2.5">
-            {settings.logoUrl ? (
-              <img src={settings.logoUrl} alt={settings.storeName} className="h-9 w-auto object-contain sm:h-10" />
-            ) : (
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand text-sm font-black sm:h-10 sm:w-10">
-                {settings.storeName.slice(0, 1)}
-              </span>
-            )}
+            <Logo className="h-9 w-auto text-ink-900 sm:h-10" />
             <span className="font-display text-lg font-bold tracking-tight text-ink-900 sm:text-xl">
               {settings.storeName}
             </span>
@@ -185,7 +180,7 @@ const Navbar: React.FC = () => {
           <div className="absolute inset-0 animate-fade-in bg-black/50" onClick={() => setMenu(false)} />
           <aside className="animate-slide-in absolute right-0 top-0 flex h-full w-[85%] max-w-sm flex-col bg-white">
             <div className="flex items-center justify-between border-b border-ink-200 px-5 py-5">
-              <span className="font-display text-lg font-bold">{settings.storeName}</span>
+              <span className="flex items-center gap-2.5 font-display text-lg font-bold"><Logo className="h-8 w-auto text-ink-900" />{settings.storeName}</span>
               <button onClick={() => setMenu(false)} className="rounded-lg p-2 hover:bg-ink-100" aria-label={L10n("Close menu")}>
                 <X size={20} />
               </button>
