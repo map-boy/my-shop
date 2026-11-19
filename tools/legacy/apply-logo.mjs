@@ -1,3 +1,4 @@
+throw new Error('LEGACY one-shot generator, paths predate the src reorg. Do not run.');
 import fs from 'node:fs';
 const rd=f=>fs.readFileSync(f,'utf8'), wr=(f,s)=>fs.writeFileSync(f,s);
 const svg=rd('public/logo.svg'), D=svg.match(/ d="([^"]+)"/)[1], VB=svg.match(/viewBox="([^"]+)"/)[1];

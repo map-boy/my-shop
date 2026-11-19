@@ -15,7 +15,7 @@ for(const f of files){if(!CODE.test(f))continue;const src=fs.readFileSync(f,'utf
   const nt=mapPath(r.t);if(nt===r.t&&nf===f)return m;let rel=nt.slice(SRC.length+1);
   if(r.k==='ext')rel=rel.replace(/\.[^./]+$/,'');if(r.k==='index')rel=rel.replace(/\/index\.[^./]+$/,'');rewrites++;return pre+q+'@/'+rel+q;}));}
 const outside=[];for(const d of ['api','tools','tests','.github','vite.config.ts','middleware.ts','index.html','package.json','firebase.json','vercel.json']){
- const fp=ROOT+'/'+d;if(!fs.existsSync(fp))continue;for(const f of(fs.statSync(fp).isDirectory()?walk(fp):[fp])){if(f.includes('/reorg/')||!/\.(m?[jt]sx?|json|html|ya?ml)$/.test(f))continue;
+ const fp=ROOT+'/'+d;if(!fs.existsSync(fp))continue;for(const f of(fs.statSync(fp).isDirectory()?walk(fp):[fp])){if(f.includes('/reorg/')||f.includes('/legacy/')||!/\.(m?[jt]sx?|json|html|ya?ml)$/.test(f))continue;
   const t=fs.readFileSync(f,'utf8');if(/src\/(pages|components|lib|context|hooks|data)\b/.test(t))outside.push(f.slice(ROOT.length+1));}}
 const moving=files.filter(f=>mapPath(f)!==f);
 console.log(`files:${files.length} moving:${moving.length} importRewrites:${rewrites}`);

@@ -36,7 +36,7 @@ jobs:
         run: |
           if [ -z "$VITE_FIREBASE_API_KEY" ]; then
             echo "::warning::VITE_FIREBASE_API_KEY is not set in the 'production' environment." \
-                 "The build will fall back to the values committed in src/lib/firebase.ts."
+                 "The build will fall back to the values committed in src/shared/lib/firebase.ts."
           else
             echo "Firebase configuration supplied by the production environment."
           fi

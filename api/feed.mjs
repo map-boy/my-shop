@@ -3,7 +3,7 @@ const PROJECT_ID = "my-shop-84749";
 const FIRESTORE_BASE = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents`;
 const SITE_ORIGIN = "https://karibu.fit";
 const CURRENCY = "UGX";
-const UGX_PER_RWF = 2.5; // keep identical to src/lib/geoCurrency.ts
+const UGX_PER_RWF = 2.5; // keep identical to src/shared/lib/geoCurrency.ts
 
 function fv(f) {
   if (!f) return undefined;
