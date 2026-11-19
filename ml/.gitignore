@@ -1,0 +1,7 @@
+data/
+models/
+*.onnx
+*.pt
+*.safetensors
+*.tflite
+.ipynb_checkpoints/
