@@ -1,9 +1,15 @@
 import type { Body, Pt } from './types.ts';
-import { CHEST_K, NOSE_ANKLE_RATIO, SEAM_CM } from './constants.ts';
+import { CHEST_K, NOSE_ANKLE_RATIO, SEAM_CM, SHOULDER_RATIO } from './constants.ts';
 import { L_ANK, L_HIP, L_SH, NOSE, R_ANK, R_HIP, R_SH } from '../pose/landmarks.ts';
 type V = { x: number; y: number };
 const mid = (a: V, b: V): V => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
 const dist = (a: V, b: V) => Math.hypot(a.x - b.x, a.y - b.y);
+/** Close-up preview: scale only (no verdict). Garment size on screen follows the user's own shoulders. */
+export function measureUpper(l: Pt[], w: number, h: number, heightCm: number): Body | null {
+  const px = Math.hypot((l[L_SH].x - l[R_SH].x) * w, (l[L_SH].y - l[R_SH].y) * h);
+  if (px < w * 0.08) return null;
+  return { shoulderCm: 0, chestCm: [0, 0], torsoCm: 0, cmPerPx: (heightCm * SHOULDER_RATIO) / px };
+}
 /** One frame -> body estimate in cm. Height in cm sets the pixel scale. */
 export function measure(l: Pt[], w: number, h: number, heightCm: number): Body | null {
   const P = (i: number): V => ({ x: l[i].x * w, y: l[i].y * h });

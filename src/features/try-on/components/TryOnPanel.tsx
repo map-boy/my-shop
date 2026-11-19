@@ -18,10 +18,10 @@ interface Props { chart?: SizeRow[]; garmentUrl?: string | null }
 export default function TryOnPanel({ chart = DEFAULT_CHART, garmentUrl = null }: Props) {
   const t = useTT(); const gt = useGT();
   const [h, setH] = useState<number | null>(loadH); const [sel, setSel] = useState<string | null>(null);
-  const [showG, setShowG] = useState(true); const [showZ, setShowZ] = useState(true);
+  const [showG, setShowG] = useState(true); const [showZ, setShowZ] = useState(false);
   const cam = useCamera(); const canvasRef = useRef<HTMLCanvasElement>(null);
   const sess = useFitSession(h ?? 170, chart); const garment = useGarment(garmentUrl);
-  const cur = sel ?? sess.fits?.best ?? null;
+  const cur = sel ?? sess.fits?.best ?? chart[Math.floor(chart.length / 2)]?.size ?? null;
   const zonesRef = useRef<ZoneResult[] | undefined>(undefined); zonesRef.current = sess.fits?.rows.find((r) => r.size === cur)?.zones;
   const smooth = useRef<Smooth>({ cur: null });
   const live = useRef<{ src: CanvasImageSource | null; multiply: boolean; body: Body | null; row?: SizeRow; showG: boolean; showZ: boolean }>({ src: null, multiply: false, body: null, showG: true, showZ: true });
@@ -33,7 +33,7 @@ export default function TryOnPanel({ chart = DEFAULT_CHART, garmentUrl = null }:
     push(l, v.videoWidth, v.videoHeight);
     const L = live.current;
     const under = (g: CanvasRenderingContext2D) => { if (l && L.showG && L.src && L.body && L.row) drawGarment(g, L.src, l, c.width, c.height, L.body.cmPerPx, L.row, smooth.current, L.multiply); };
-    drawOverlay(c, l, zonesRef.current, under, L.showZ);
+    drawOverlay(c, l, zonesRef.current, under, L.showZ && !!zonesRef.current);
   }, [push, cam.videoRef]);
   const pose = usePoseLoop(cam.videoRef, cam.state === 'on', onLms);
   const stopAll = () => { cam.stop(); sess.reset(); setSel(null); smooth.current.cur = null; const c = canvasRef.current; c?.getContext('2d')?.clearRect(0, 0, c.width, c.height); };
@@ -56,6 +56,7 @@ export default function TryOnPanel({ chart = DEFAULT_CHART, garmentUrl = null }:
         <button onClick={() => setShowG(!showG)} className={tog(showG)}>{gt('garment')}</button>
         <button onClick={() => setShowZ(!showZ)} className={tog(showZ)}>{gt('zones')}</button>
       </div>
+      {!sess.fits && cur && <div className="flex flex-wrap gap-2" role="group">{chart.map((r) => <button key={r.size} onClick={() => setSel(r.size)} className={'rounded-full border px-4 py-2 text-sm font-semibold ' + (r.size === cur ? 'border-neutral-900 bg-neutral-900 text-white' : 'border-neutral-300')}>{r.size}</button>)}</div>}
       {sess.fits && cur && <FitVerdict rows={sess.fits.rows} best={sess.fits.best} cur={cur} onPick={setSel} />}
       <p className="text-xs text-neutral-500">{t('estimate')} {t('privacy')}</p>
       <button onClick={() => { stopAll(); try { localStorage.removeItem(KEY); } catch { /* ignore */ } setH(null); }} className="text-xs underline text-neutral-500">{t('changeHeight')} ({h} cm)</button>
