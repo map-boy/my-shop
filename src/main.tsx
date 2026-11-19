@@ -2,7 +2,7 @@
 import React from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import './index.css';
-import { L10n } from './lib/i18n';
+import { L10n } from '@/shared/lib/i18n';
 
 const container = document.getElementById('root');
 if (!container) throw new Error('Root element #root is missing from index.html');
