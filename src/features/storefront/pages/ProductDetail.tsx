@@ -13,6 +13,7 @@ import { useCart } from '@/app/context/CartContext';
 import { useToast } from '@/app/context/ToastContext';
 import ProductCard from '@/shared/components/ProductCard';
 import ProductGallery from '@/shared/components/ProductGallery';
+import { TryOnButton } from '@/features/try-on';
 import { Badge, Button, PageLoader, SectionHeading } from '@/shared/components/ui';
 import type { Product } from '@/shared/lib/types';
 import { cn, discountPercent, PLACEHOLDER_IMAGE } from '@/shared/lib/utils';
@@ -345,6 +346,8 @@ const ProductDetail: React.FC = () => {
             <Share2 size={16} />
             {sharing ? tr('preparing') : tr('share')}
           </button>
+
+          <TryOnButton slug={product.slug || product.id} img={product.images?.[0]} />
 
           <ul className="mt-9 grid gap-4 border-t border-ink-200 pt-8 sm:grid-cols-3">
             <li className="flex items-start gap-3 text-xs text-ink-600">
