@@ -39,6 +39,8 @@ import PushPrompt from '@/shared/components/PushPrompt';
 import { L10n } from '@/shared/lib/i18n';
 
 // The dashboard is loaded on demand - shoppers never download it.
+import { TRY_ON_ENABLED } from '@/features/try-on/flag';
+const TryOnPage = React.lazy(() => import('@/features/try-on/TryOnPage'));
 const AdminLogin = React.lazy(() => import('@/features/admin/pages/AdminLogin'));
 const AdminLayout = React.lazy(() => import('@/features/admin/pages/AdminLayout'));
 const Dashboard = React.lazy(() => import('@/features/admin/pages/Dashboard'));
@@ -161,6 +163,7 @@ const App: React.FC = () => (
                 <Route path="/shop/:seller" element={<SellerShop />} />
                 <Route path="/section/:slug" element={<SectionPage />} />
                 <Route path="/product/:slug" element={<ProductDetail />} />
+          {TRY_ON_ENABLED && <Route path="/try-on" element={<React.Suspense fallback={null}><TryOnPage /></React.Suspense>} />}
                 <Route path="/categories" element={<Categories />} />
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/checkout" element={<Checkout />} />
