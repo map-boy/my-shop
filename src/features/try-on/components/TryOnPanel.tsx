@@ -5,6 +5,7 @@ import { DEFAULT_CHART } from '../fit/sizeChart.ts';
 import type { Body, Pt, SizeRow, ZoneResult } from '../fit/types.ts';
 import { usePoseLoop } from '../pose/usePoseLoop';
 import { drawOverlay } from '../pose/drawOverlay.ts';
+import { loadPose } from '../pose/poseModel';
 import { drawGarment, type Smooth } from '../garment/drawGarment.ts';
 import { useGarment } from '../garment/useGarment.ts';
 import { useGT } from '../garment/strings.ts';
@@ -49,9 +50,44 @@ export default function TryOnPanel({ chart = DEFAULT_CHART, garmentUrl = null }:
     loop();
     return () => cancelAnimationFrame(raf);
   }, [cam.state, cam.videoRef]);
+  const [photo, setPhoto] = useState<HTMLCanvasElement | null>(null); const [photoL, setPhotoL] = useState<Pt[] | null>(null); const [photoMsg, setPhotoMsg] = useState('');
+  useEffect(() => {
+    const c = canvasRef.current; if (!photo || !c) return;
+    c.width = photo.width; c.height = photo.height;
+    const g = c.getContext('2d'); if (!g) return;
+    g.clearRect(0, 0, c.width, c.height); g.drawImage(photo, 0, 0);
+    const row = chart.find((r) => r.size === cur);
+    if (photoL && showG && garment.src && sess.body && row) drawGarment(g, garment.src, photoL, c.width, c.height, sess.body.cmPerPx, row, { cur: null }, garment.multiply, photo);
+  }, [photo, photoL, showG, garment.src, garment.multiply, sess.body, cur, chart]);
+  const loadPhoto = async (f: File) => {
+    setPhotoMsg(''); cam.stop(); sess.reset();
+    try {
+      const bmp = await createImageBitmap(f, { imageOrientation: 'from-image' });
+      const k = Math.min(1, 1280 / Math.max(bmp.width, bmp.height));
+      const pc = document.createElement('canvas'); pc.width = Math.round(bmp.width * k); pc.height = Math.round(bmp.height * k);
+      pc.getContext('2d')?.drawImage(bmp, 0, 0, pc.width, pc.height);
+      const model = await loadPose(); let l: Pt[] | null = null; const t0 = performance.now();
+      for (let i = 0; i < 3; i++) l = model.detectForVideo(pc, t0 + i * 40).landmarks[0] ?? null;
+      if (!l) { setPhoto(null); setPhotoL(null); setPhotoMsg(gt('photoNoBody')); return; }
+      for (let i = 0; i < 20; i++) push(l, pc.width, pc.height);
+      setPhoto(pc); setPhotoL(l);
+    } catch { setPhotoMsg(gt('photoNoBody')); }
+  };
+  const snap = async () => {
+    const c = canvasRef.current, v = cam.videoRef.current; if (!c) return;
+    let w = c.width, hh = c.height;
+    if (!photo) { if (!v || !v.videoWidth) return; w = v.videoWidth; hh = v.videoHeight; }
+    const o = document.createElement('canvas'); o.width = w; o.height = hh; const g = o.getContext('2d'); if (!g) return;
+    if (photo) g.drawImage(c, 0, 0);
+    else { if (cam.facing === 'user') { g.translate(w, 0); g.scale(-1, 1); } g.drawImage(v as HTMLVideoElement, 0, 0, w, hh); g.drawImage(c, 0, 0, w, hh); }
+    const blob: Blob | null = await new Promise((r) => o.toBlob(r, 'image/jpeg', 0.92)); if (!blob) return;
+    const file = new File([blob], 'karibu-try-on.jpg', { type: 'image/jpeg' });
+    try { if (navigator.canShare?.({ files: [file] })) { await navigator.share({ files: [file] }); return; } } catch (e) { if ((e as { name?: string })?.name === 'AbortError') return; }
+    const a = document.createElement('a'); a.href = URL.createObjectURL(file); a.download = file.name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  };
   const pose = usePoseLoop(cam.videoRef, cam.state === 'on', onLms);
   const stopAll = () => { cam.stop(); sess.reset(); setSel(null); smooth.current.cur = null; const c = canvasRef.current; c?.getContext('2d')?.clearRect(0, 0, c.width, c.height); };
-  const msg = cam.state === 'denied' ? t('camDenied') : cam.state === 'error' ? t('camError') : pose === 'error' ? t('modelError') : pose === 'loading' ? t('loadingModel')
+  const msg = photoMsg ? photoMsg : cam.state === 'denied' ? t('camDenied') : cam.state === 'error' ? t('camError') : pose === 'error' ? t('modelError') : pose === 'loading' ? t('loadingModel')
     : garment.status === 'loading' ? gt('garmentLoading') : garment.status === 'error' ? gt('garmentError')
     : sess.status === 'noBody' ? t('noBody') : sess.status === 'stepBack' ? t('stepBack') : sess.status === 'measuring' ? t('measuring') : '';
   if (h === null) return <HeightPrompt initial={null} onSave={(n) => { try { localStorage.setItem(KEY, String(n)); } catch { /* private mode */ } setH(n); }} />;
@@ -60,15 +96,19 @@ export default function TryOnPanel({ chart = DEFAULT_CHART, garmentUrl = null }:
   return (
     <div className="space-y-4">
       <h1 className="text-xl font-semibold">{t('title')}</h1>
-      <CameraView videoRef={cam.videoRef} canvasRef={canvasRef} mirrored={cam.facing === 'user'} />
+      <CameraView videoRef={cam.videoRef} canvasRef={canvasRef} mirrored={!photo && cam.facing === 'user'} />
       {msg && <p className="text-center text-sm text-neutral-600" role="status">{msg}</p>}
       <div className="flex gap-2">
         {on ? (<><button onClick={stopAll} className="flex-1 rounded-xl border border-neutral-300 px-4 py-3 font-medium">{t('stop')}</button><button onClick={() => { sess.reset(); smooth.current.cur = null; cam.flip(); }} className="flex-1 rounded-xl border border-neutral-300 px-4 py-3 font-medium">{t('flip')}</button></>)
-          : (<button onClick={() => cam.start('user')} className="w-full rounded-xl bg-neutral-900 px-4 py-3 font-medium text-white">{t('start')}</button>)}
+          : (<button onClick={() => { setPhoto(null); setPhotoL(null); setPhotoMsg(''); cam.start('user'); }} className="w-full rounded-xl bg-neutral-900 px-4 py-3 font-medium text-white">{t('start')}</button>)}
       </div>
       <div className="flex gap-2">
         <button onClick={() => setShowG(!showG)} className={tog(showG)}>{gt('garment')}</button>
         <button onClick={() => setShowZ(!showZ)} className={tog(showZ)}>{gt('zones')}</button>
+      </div>
+      <div className="flex gap-2">
+        {(on || photo) && <button onClick={snap} className="flex-1 rounded-xl bg-neutral-900 px-4 py-3 font-medium text-white">{gt('snap')}</button>}
+        <label className="flex-1 cursor-pointer rounded-xl border border-neutral-300 px-4 py-3 text-center font-medium">{gt('uploadPhoto')}<input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void loadPhoto(f); }} /></label>
       </div>
       {!sess.fits && cur && <div className="flex flex-wrap gap-2" role="group">{chart.map((r) => <button key={r.size} onClick={() => setSel(r.size)} className={'rounded-full border px-4 py-2 text-sm font-semibold ' + (r.size === cur ? 'border-neutral-900 bg-neutral-900 text-white' : 'border-neutral-300')}>{r.size}</button>)}</div>}
       {sess.fits && cur && <FitVerdict rows={sess.fits.rows} best={sess.fits.best} cur={cur} onPick={setSel} />}

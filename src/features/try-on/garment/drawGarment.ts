@@ -4,7 +4,7 @@ import { COLLAR_CM, EMA, SLEEVE_K } from './constants.ts';
 export interface GState { a: number; b: number; c: number; d: number; tx: number; ty: number; gw: number; gh: number }
 export interface Smooth { cur: GState | null }
 /** Draws the garment at the true cm size of `row`, rotated and anchored to shoulders/hips. Call after clearRect. */
-export function drawGarment(g: CanvasRenderingContext2D, img: CanvasImageSource, l: Pt[], w: number, h: number, cmPerPx: number, row: SizeRow, st: Smooth, multiply: boolean, vid?: HTMLVideoElement) {
+export function drawGarment(g: CanvasRenderingContext2D, img: CanvasImageSource, l: Pt[], w: number, h: number, cmPerPx: number, row: SizeRow, st: Smooth, multiply: boolean, vid?: HTMLVideoElement | HTMLCanvasElement) {
   const P = (i: number) => ({ x: l[i].x * w, y: l[i].y * h });
   const ls = P(L_SH), rs = P(R_SH), lh = P(L_HIP), rh = P(R_HIP);
   let sx = rs.x - ls.x, sy = rs.y - ls.y; if (sx < 0) { sx = -sx; sy = -sy; }
@@ -18,7 +18,7 @@ export function drawGarment(g: CanvasRenderingContext2D, img: CanvasImageSource,
   g.save(); g.globalAlpha = 0.93; if (multiply) g.globalCompositeOperation = 'multiply';
   g.setTransform(n.a, n.b, n.c, n.d, n.tx, n.ty); g.drawImage(img, -n.gw / 2, 0, n.gw, n.gh);
   g.restore();
-  if (vid && vid.videoWidth) {
+  if (vid && ((vid as HTMLVideoElement).videoWidth || (vid as HTMLCanvasElement).width)) {
     const up = 1 / cmPerPx, W = w * 3, ex = sx * W, ey = sy * W, ux = dx * up, uy = dy * up;
     g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.beginPath();
     g.moveTo(ls.x - ex - ux, ls.y - ey - uy); g.lineTo(rs.x + ex - ux, rs.y + ey - uy);

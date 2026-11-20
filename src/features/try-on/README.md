@@ -13,6 +13,7 @@ Flag: `VITE_FEATURE_TRY_ON=true` (build time). Route: `/try-on?p=<slug>&img=<pho
 | Embed on other sites (`public/try-on-embed.js`, iframe, `embed=1` hides storefront chrome) | done |
 | 2D garment cut-out from the product photo (tap-point model, multiclass fallback, flood-fill fallback) | done, limited quality |
 | Head/neck drawn in front of garment (2D occlusion) | in progress, unverified |
+| Photo mode (upload or phone-camera photo) + Take picture (saves or shares the result) | done |
 | **3D garment (three.js + GLB), turns with the person** | **planned, not built** |
 
 ## Folder map
@@ -89,3 +90,7 @@ Goal: the person can move, turn and step closer, and the garment follows like re
 ## Privacy
 
 Pose and segmentation run on the device. Models load from jsDelivr and storage.googleapis.com. No camera frames are uploaded.
+## Photo mode and Take picture
+- "Use my photo": file input (`accept=image/*`; on phones it offers camera or gallery). The photo is scaled to 1280 px, pose runs on it (`detectForVideo` on a canvas, 3 passes), 20 identical samples feed `useFitSession` so size verdicts work, then the garment is drawn once on the photo canvas. Needs a visible person; otherwise `photoNoBody` is shown.
+- "Take picture": composites the live video (mirrored when the front camera is used) with the garment canvas, or exports the photo canvas, as JPEG. Uses Web Share with files where supported, else downloads `karibu-try-on.jpg`.
+- "Open camera" clears the photo and returns to live mode. Images never leave the device.
