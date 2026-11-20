@@ -4,7 +4,7 @@ export function loadImage(url: string, cors = true): Promise<HTMLImageElement> {
     const i = new Image();
     if (cors && !url.startsWith('blob:') && !url.startsWith('data:')) i.crossOrigin = 'anonymous';
     i.onload = () => res(i);
-    i.onerror = () => (cors ? loadImage(url, false).then(res, rej) : rej(new Error('image failed')));
+    i.onerror = () => { if (!cors) return rej(new Error('image failed')); if (/^https?:/.test(url) && !url.includes('/api/img?')) loadImage('/api/img?u=' + encodeURIComponent(url), true).then(res, () => loadImage(url, false).then(res, rej)); else loadImage(url, false).then(res, rej); };
     i.src = url;
   });
 }
