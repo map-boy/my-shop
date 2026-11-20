@@ -228,6 +228,7 @@ src/
 The dashboard is code-split — a shopper never downloads it.
 
 ## Virtual try-on (`/try-on`, flag `VITE_FEATURE_TRY_ON=true`)
-Live camera mirror with the garment overlaid at true cm size (MediaPipe pose, on-device, ~30 fps detection, per-frame rendering). Embeddable on any site via `public/try-on-embed.js`; see `src/features/try-on/README.md`.
 
-Try-on garment images are cut out with an on-device clothes-segmentation model; see src/features/try-on/README.md. pi/img.mjs is the image proxy that makes the pixels readable.
+Live camera fitting: pose-based size verdict and a real-time garment overlay, on-device (MediaPipe). Embeddable on any site with `public/try-on-embed.js`. Garment images are read through `api/img.mjs` (same-origin proxy).
+
+Roadmap: replace the 2D overlay with a 3D garment (three.js + GLB per product, free tool chain) that turns with the person. Full design, phases and acceptance criteria: `src/features/try-on/README.md`.

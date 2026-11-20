@@ -1,25 +1,91 @@
-# try-on (camera fit check)
-subfolders to add: camera/ fit/ components/ services/
-Runs on-device, camera frames are never uploaded.
+# try-on (live virtual fitting)
 
-## Real time
-Pose detection ~30 fps (GPU delegate). A separate requestAnimationFrame loop draws the garment every frame; drawGarment EMA-smooths between detections. Landmarks older than 400 ms are dropped.
+Customer opens the camera on a product page and sees the garment on their own body, in real time, on the phone. Camera frames never leave the device.
+
+Flag: `VITE_FEATURE_TRY_ON=true` (build time). Route: `/try-on?p=<slug>&img=<photo>[&embed=1]`.
+
+## Status
+
+| Part | State |
+| --- | --- |
+| Live camera, MediaPipe pose, size/fit verdict (shoulders, chest, length) | done |
+| Real-time loop: detect ~30 fps, draw every frame, EMA smoothing, landmarks older than 400 ms dropped | done |
+| Embed on other sites (`public/try-on-embed.js`, iframe, `embed=1` hides storefront chrome) | done |
+| 2D garment cut-out from the product photo (tap-point model, multiclass fallback, flood-fill fallback) | done, limited quality |
+| Head/neck drawn in front of garment (2D occlusion) | in progress, unverified |
+| **3D garment (three.js + GLB), turns with the person** | **planned, not built** |
+
+## Folder map
+
+```
+camera/      useCamera: getUserMedia, front/back switch
+pose/        MediaPipe PoseLandmarker (GPU, CPU fallback), usePoseLoop, landmarks, drawOverlay
+fit/         measure, stabilize, compare, size chart, useFitSession (cm estimates and verdicts)
+garment/     2D path: segment.ts, cutout.ts, drawGarment.ts, useGarment.ts
+components/  TryOnPanel, CameraView, FitVerdict, HeightPrompt, TryOnButton
+```
+
+## Current 2D pipeline
+
+1. Pose gives 33 landmarks; `measure.ts` scales pixels to cm from the user's height.
+2. `segment.ts` cuts the garment out of the product photo: magic_touch tap-point model, then selfie_multiclass connected piece, then `cutout.ts` flood fill. If all fail nothing is drawn (never the raw photo).
+3. `drawGarment.ts` places the cut-out on shoulders/hips at true cm size, smoothed.
+4. Pixel access to Firebase Storage images needs CORS: `api/img.mjs` (same-origin proxy, firebasestorage hosts only) or `gsutil cors set cors.json gs://my-shop-84749.firebasestorage.app`.
+
+Known limits of 2D (why 3D is next): one flat photo has no side or back, so it cannot turn with the person; mannequin photos with busy backgrounds leave skin/shading artifacts; it always looks like a sticker.
 
 ## Embed on other sites
+
+```html
 <script src="https://karibu.fit/try-on-embed.js" data-product="<slug>" data-img="<optional photo url>"></script>
-Opens /try-on?p=<slug>&embed=1 in an iframe with allow="camera". vercel.json sets Permissions-Policy camera=* and frame-ancestors * for /try-on only. Needs https.
+```
 
-With &embed=1 the storefront chrome (navbar, footer, cart drawer) is hidden so the page fits inside the iframe.
+Opens `/try-on?p=<slug>&embed=1` in an iframe with `allow="camera"`. `vercel.json` sets `Permissions-Policy: camera=*` and `frame-ancestors *` for `/try-on` only. Needs https. Local test: `tools/embed-test.html` (not committed).
 
-## Garment cut-out (fit, not a picture)
-garment/segment.ts runs MediaPipe selfie_multiclass and keeps only the clothes pixels, so mannequin / worn photos with busy backgrounds become a transparent garment that is then sized to the body. Fallback: flood-fill cutout.ts for flat-lay photos. If neither works the garment is not drawn (no raw photo). Pixel access needs CORS: api/img.mjs (same-origin proxy, firebasestorage hosts only) or `gsutil cors set cors.json gs://my-shop-84749.firebasestorage.app`.
+## 3D plan (target)
 
-## Garment cut-out v2
-segment.ts order: (1) MediaPipe magic_touch tap-point model, tapped at image centre (0.5, 0.55), gives only the main garment, no neighbours; (2) selfie_multiclass clothes mask, keeping only the connected piece nearest the centre; (3) flood-fill cutout.ts. If all fail nothing is drawn (no raw photo). drawGarment keeps the cut-out's own aspect ratio: width from chest size, height from the image proportions, so dresses are not squashed to top length. Tested on a mannequin photo with a busy shop background (tools/segprobe.html, not committed).
+Goal: the person can move, turn and step closer, and the garment follows like real clothing.
 
-segment.ts: after the tap-point mask, dropSkin() removes pixels the multiclass model labels hair / body-skin / face-skin, so mannequin neck, shoulders and arms are not drawn on the customer; only fabric remains.
+**Rendering**
+- three.js in a transparent canvas over the video, same size and mirroring as `CameraView`.
+- MediaPipe `worldLandmarks` (metric 3D) drive position, rotation and scale; shoulders and hips define the torso frame.
+- Garment is a rigged or skinned GLB. Simple tops/dresses: bind to a torso skeleton (chest, hips, shoulders) and bend with the pose.
+- Occlusion: invisible body proxy (head, neck, arms) written to the depth buffer, so head and arms stay in front of the garment.
+- Lighting: neutral HDRI plus one directional light; later match brightness to the camera feed.
+- Smoothing: One-Euro filter on landmarks, quaternion slerp on rotation.
 
-segment.ts render(): after masking, pixels with a tan/brown skin hue (r>g and g-b>32) are made transparent, which removes leftover mannequin neck/shoulder shading. Tune the 32 if real garment colours disappear.
+**Data**
+- Product gets `model3d?: string` (GLB URL in Firebase Storage) and `model3dScale?` (optional cm calibration).
+- Admin Product editor: GLB upload field. Products without a GLB keep the 2D path.
+- GLB limits: under 5 MB, under 50k triangles, Draco/meshopt compressed, textures 1024 px.
 
-## Worn, not floating
-drawGarment repaints the live video above the shoulder line (1 cm margin) after the garment, so head and neck stay in front and the garment sits on the shoulders. segment.ts also drops dark grey low-saturation pixels (mannequin shading). Tune: 1 cm margin in drawGarment, 330 / 45 in segment.ts.
+**Free tool chain**
+- three.js, MediaPipe, Blender, glTF-Transform (compression), Firebase Storage.
+- Image-to-3D for first drafts: TripoSR or Hugging Face spaces, run on free Colab GPU. Free usage limits apply.
+- Input photo must be a clean garment on a plain background. Every generated model is cleaned in Blender (mesh, scale, rig) before publishing.
+
+**Phases**
+1. Prototype: one garment GLB, three.js layer over the video, follows shoulders/hips. Measure fps on a mid-range phone.
+2. Worn look: depth occlusion proxy, skeleton bend, smoothing.
+3. Turning: use pose yaw to rotate the model; fade out or lock rotation past about 60 degrees.
+4. Admin upload, per-product GLB, fallback to 2D.
+5. Quality gate and rollout to more products.
+
+**Acceptance (phase 1 to 2)**
+- At least 24 fps on a mid-range Android phone.
+- Garment stays attached to shoulders while the person walks left/right and steps closer/back.
+- Head and arms render in front of the garment.
+- No raw photo ever drawn.
+
+**Risks**
+- Free image-to-3D quality is uneven; budget Blender cleanup per garment.
+- Loose fabric (dresses) needs more than a rigid mesh; start with fitted tops.
+- Back of the garment is invented by the model; label it as an estimate.
+
+## Tuning constants
+
+`fit/constants.ts` (body ratios, fit limits), `garment/constants.ts` (SLEEVE_K, COLLAR_CM, EMA, CUT_TOL, MAX_PX).
+
+## Privacy
+
+Pose and segmentation run on the device. Models load from jsDelivr and storage.googleapis.com. No camera frames are uploaded.
