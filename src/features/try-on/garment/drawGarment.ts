@@ -12,7 +12,7 @@ export function drawGarment(g: CanvasRenderingContext2D, img: CanvasImageSource,
   const ms = { x: (ls.x + rs.x) / 2, y: (ls.y + rs.y) / 2 }, mh = { x: (lh.x + rh.x) / 2, y: (lh.y + rh.y) / 2 };
   const hipsOk = [L_HIP, R_HIP].every((i) => (l[i].visibility ?? 1) > 0.5 && l[i].y < 0.98 && l[i].y > l[L_SH].y); let dx = hipsOk ? mh.x - ms.x : -sy, dy = hipsOk ? mh.y - ms.y : sx; const dn = Math.hypot(dx, dy) || 1; dx /= dn; dy /= dn;
   const collar = COLLAR_CM / cmPerPx;
-  const n: GState = { a: sx, b: sy, c: dx, d: dy, tx: ms.x - dx * collar, ty: ms.y - dy * collar, gw: ((row.chestCm / 2) * SLEEVE_K) / cmPerPx, gh: (row.lengthCm + COLLAR_CM) / cmPerPx };
+  const n: GState = { a: sx, b: sy, c: dx, d: dy, tx: ms.x - dx * collar, ty: ms.y - dy * collar, gw: ((row.chestCm / 2) * SLEEVE_K) / cmPerPx, gh: ((((row.chestCm / 2) * SLEEVE_K) / cmPerPx) * ((img as HTMLCanvasElement).height / (img as HTMLCanvasElement).width)) || (row.lengthCm + COLLAR_CM) / cmPerPx };
   const o = st.cur; if (o) for (const k of Object.keys(n) as (keyof GState)[]) n[k] = o[k] + (n[k] - o[k]) * EMA;
   st.cur = n;
   g.save(); g.globalAlpha = 0.93; if (multiply) g.globalCompositeOperation = 'multiply';
