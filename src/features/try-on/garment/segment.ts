@@ -46,13 +46,27 @@ function render(img: HTMLImageElement, keep: Uint8Array, mw: number, mh: number)
 }
 const T = <V,>(p: Promise<V>, ms: number) => Promise.race([p, new Promise<never>((_, r) => setTimeout(() => r(new Error('timeout')), ms))]);
 
+/** Removes mannequin / body pixels (multiclass hair, body-skin, face-skin) from the tap-point mask, so only fabric stays. */
+async function dropSkin(img: HTMLImageElement, keep: Uint8Array, w: number, h: number) {
+  try {
+    const s = await T(multiModel(), 60000);
+    const res = s.segment(img), mm = res.categoryMask; if (!mm) return;
+    const d = mm.getAsUint8Array(), W = mm.width, H = mm.height;
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const i = y * w + x; if (!keep[i]) continue;
+      const c = d[Math.min(H - 1, ((y * H) / h) | 0) * W + Math.min(W - 1, ((x * W) / w) | 0)];
+      if (c >= 1 && c <= 3) keep[i] = 0;
+    }
+    try { mm.close(); } catch { /* ignore */ }
+  } catch { /* keep the tap mask as is */ }
+}
 async function viaTap(img: HTMLImageElement): Promise<HTMLCanvasElement | null> {
   const s = await T(tapModel(), 60000);
   for (const y of [0.55, 0.45, 0.65]) {
     const r = s.segment(img, { keypoint: { x: 0.5, y } }); const m = r.confidenceMasks?.[0]; if (!m) continue;
     const f = m.getAsFloat32Array(), keep = new Uint8Array(f.length);
     for (let i = 0; i < f.length; i++) keep[i] = f[i] > 0.5 ? 1 : 0;
-    const out = render(img, keep, m.width, m.height); try { m.close(); } catch { /* ignore */ }
+    await dropSkin(img, keep, m.width, m.height); const out = render(img, keep, m.width, m.height); try { m.close(); } catch { /* ignore */ }
     if (out) return out;
   }
   return null;
