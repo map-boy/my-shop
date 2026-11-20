@@ -36,7 +36,7 @@ function render(img: HTMLImageElement, keep: Uint8Array, mw: number, mh: number)
   const c = document.createElement('canvas'); c.width = w; c.height = h;
   const g = c.getContext('2d'); if (!g) return null;
   g.drawImage(img, 0, 0, w, h);
-  g.globalCompositeOperation = 'destination-in'; g.imageSmoothingQuality = 'high'; g.drawImage(mc, 0, 0, w, h);
+  g.globalCompositeOperation = 'destination-in'; g.imageSmoothingQuality = 'high'; g.drawImage(mc, 0, 0, w, h); { const dd = g.getImageData(0, 0, w, h), p = dd.data; for (let i = 0; i < p.length; i += 4) { if (p[i + 3] && p[i] > p[i + 1] && p[i + 1] - p[i + 2] > 32) p[i + 3] = 0; } g.putImageData(dd, 0, 0); }
   const sx = w / mw, sy = h / mh, pad = 2;
   const cx = Math.max(0, Math.floor(x0 * sx) - pad), cy = Math.max(0, Math.floor(y0 * sy) - pad);
   const cw = Math.min(w - cx, Math.ceil((x1 - x0 + 1) * sx) + pad * 2), ch = Math.min(h - cy, Math.ceil((y1 - y0 + 1) * sy) + pad * 2);
