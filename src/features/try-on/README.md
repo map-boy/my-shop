@@ -20,3 +20,6 @@ segment.ts order: (1) MediaPipe magic_touch tap-point model, tapped at image cen
 segment.ts: after the tap-point mask, dropSkin() removes pixels the multiclass model labels hair / body-skin / face-skin, so mannequin neck, shoulders and arms are not drawn on the customer; only fabric remains.
 
 segment.ts render(): after masking, pixels with a tan/brown skin hue (r>g and g-b>32) are made transparent, which removes leftover mannequin neck/shoulder shading. Tune the 32 if real garment colours disappear.
+
+## Worn, not floating
+drawGarment repaints the live video above the shoulder line (1 cm margin) after the garment, so head and neck stay in front and the garment sits on the shoulders. segment.ts also drops dark grey low-saturation pixels (mannequin shading). Tune: 1 cm margin in drawGarment, 330 / 45 in segment.ts.

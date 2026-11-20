@@ -43,7 +43,7 @@ export default function TryOnPanel({ chart = DEFAULT_CHART, garmentUrl = null }:
       if (c.width !== v.videoWidth) { c.width = v.videoWidth; c.height = v.videoHeight; }
       const { l: raw, t } = lmsRef.current; const l = raw && performance.now() - t < 400 ? raw : null;
       const L = live.current;
-      const under = (g: CanvasRenderingContext2D) => { if (l && L.showG && L.src && L.body && L.row) drawGarment(g, L.src, l, c.width, c.height, L.body.cmPerPx, L.row, smooth.current, L.multiply); };
+      const under = (g: CanvasRenderingContext2D) => { if (l && L.showG && L.src && L.body && L.row) drawGarment(g, L.src, l, c.width, c.height, L.body.cmPerPx, L.row, smooth.current, L.multiply, v); };
       drawOverlay(c, l, zonesRef.current, under, L.showZ && !!zonesRef.current);
     };
     loop();
