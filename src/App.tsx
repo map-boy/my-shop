@@ -106,6 +106,8 @@ const PlatformOnly: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 /** Storefront chrome: navigation, cart drawer and footer around every shop page. */
 const StoreLayout: React.FC = () => {
   const { settings } = useStore();
+  const { pathname, search } = useLocation();
+  if (pathname === '/try-on' && new URLSearchParams(search).get('embed') === '1') return <main><Outlet /></main>;
 
   if (settings.maintenance.enabled) {
     return (

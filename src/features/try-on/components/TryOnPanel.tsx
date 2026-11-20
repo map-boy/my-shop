@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useCamera } from '../camera/useCamera';
 import { useFitSession } from '../fit/useFitSession.ts';
 import { DEFAULT_CHART } from '../fit/sizeChart.ts';
@@ -27,14 +27,28 @@ export default function TryOnPanel({ chart = DEFAULT_CHART, garmentUrl = null }:
   const live = useRef<{ src: CanvasImageSource | null; multiply: boolean; body: Body | null; row?: SizeRow; showG: boolean; showZ: boolean }>({ src: null, multiply: false, body: null, showG: true, showZ: true });
   live.current = { src: garment.src, multiply: garment.multiply, body: sess.body, row: chart.find((r) => r.size === cur), showG, showZ };
   const { push } = sess;
+  const lmsRef = useRef<{ l: Pt[] | null; t: number }>({ l: null, t: 0 });
   const onLms = useCallback((l: Pt[] | null) => {
     const v = cam.videoRef.current, c = canvasRef.current; if (!v || !c || !v.videoWidth) return;
     if (c.width !== v.videoWidth) { c.width = v.videoWidth; c.height = v.videoHeight; }
     push(l, v.videoWidth, v.videoHeight);
-    const L = live.current;
-    const under = (g: CanvasRenderingContext2D) => { if (l && L.showG && L.src && L.body && L.row) drawGarment(g, L.src, l, c.width, c.height, L.body.cmPerPx, L.row, smooth.current, L.multiply); };
-    drawOverlay(c, l, zonesRef.current, under, L.showZ && !!zonesRef.current);
+    lmsRef.current = { l, t: performance.now() };
   }, [push, cam.videoRef]);
+  useEffect(() => {
+    if (cam.state !== 'on') return;
+    let raf = 0;
+    const loop = () => {
+      raf = requestAnimationFrame(loop);
+      const v = cam.videoRef.current, c = canvasRef.current; if (!v || !c || !v.videoWidth) return;
+      if (c.width !== v.videoWidth) { c.width = v.videoWidth; c.height = v.videoHeight; }
+      const { l: raw, t } = lmsRef.current; const l = raw && performance.now() - t < 400 ? raw : null;
+      const L = live.current;
+      const under = (g: CanvasRenderingContext2D) => { if (l && L.showG && L.src && L.body && L.row) drawGarment(g, L.src, l, c.width, c.height, L.body.cmPerPx, L.row, smooth.current, L.multiply); };
+      drawOverlay(c, l, zonesRef.current, under, L.showZ && !!zonesRef.current);
+    };
+    loop();
+    return () => cancelAnimationFrame(raf);
+  }, [cam.state, cam.videoRef]);
   const pose = usePoseLoop(cam.videoRef, cam.state === 'on', onLms);
   const stopAll = () => { cam.stop(); sess.reset(); setSel(null); smooth.current.cur = null; const c = canvasRef.current; c?.getContext('2d')?.clearRect(0, 0, c.width, c.height); };
   const msg = cam.state === 'denied' ? t('camDenied') : cam.state === 'error' ? t('camError') : pose === 'error' ? t('modelError') : pose === 'loading' ? t('loadingModel')

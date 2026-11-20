@@ -1,8 +1,48 @@
 {
-  "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/$1" },
-    { "source": "/sitemap.xml", "destination": "/api/sitemap" },
-    { "source": "/feed.xml", "destination": "/api/feed" },
-    { "source": "/(.*)", "destination": "/index.html" }
-  ]
+    "rewrites":  [
+                     {
+                         "source":  "/api/(.*)",
+                         "destination":  "/api/$1"
+                     },
+                     {
+                         "source":  "/sitemap.xml",
+                         "destination":  "/api/sitemap"
+                     },
+                     {
+                         "source":  "/feed.xml",
+                         "destination":  "/api/feed"
+                     },
+                     {
+                         "source":  "/(.*)",
+                         "destination":  "/index.html"
+                     }
+                 ],
+    "headers":  [
+                    {
+                        "headers":  [
+                                        {
+                                            "key":  "Permissions-Policy",
+                                            "value":  "camera=*"
+                                        },
+                                        {
+                                            "key":  "Content-Security-Policy",
+                                            "value":  "frame-ancestors *"
+                                        }
+                                    ],
+                        "source":  "/try-on"
+                    },
+                    {
+                        "headers":  [
+                                        {
+                                            "key":  "Access-Control-Allow-Origin",
+                                            "value":  "*"
+                                        },
+                                        {
+                                            "key":  "Cache-Control",
+                                            "value":  "public, max-age=3600"
+                                        }
+                                    ],
+                        "source":  "/try-on-embed.js"
+                    }
+                ]
 }

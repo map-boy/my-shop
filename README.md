@@ -226,3 +226,6 @@ src/
 ```
 
 The dashboard is code-split — a shopper never downloads it.
+
+## Virtual try-on (`/try-on`, flag `VITE_FEATURE_TRY_ON=true`)
+Live camera mirror with the garment overlaid at true cm size (MediaPipe pose, on-device, ~30 fps detection, per-frame rendering). Embeddable on any site via `public/try-on-embed.js`; see `src/features/try-on/README.md`.
