@@ -11,6 +11,7 @@ import { translateMissing } from '@/shared/lib/autoTranslate';
 import ImageInput from '@/shared/components/ImageInput';
 import { useSections } from '@/shared/lib/sections';
 import VideoInput from '@/shared/components/VideoInput';
+import GlbInput from '@/shared/components/GlbInput';
 import { Button, Field, Input, Modal, Select, Textarea, Toggle } from '@/shared/components/ui';
 import type { Product, ProductOption } from '@/shared/lib/types';
 import { cn, discountPercent, errorMessage, slugify } from '@/shared/lib/utils';
@@ -303,6 +304,12 @@ const ProductEditor: React.FC<Props> = ({ open, product, onClose }) => {
             folder="products/video"
             label="Product video"
             hint="Optional. MP4 or WebM up to 15 MB. It appears as the last item in the product gallery."
+          />
+          <GlbInput
+            value={form.model3d ?? ''}
+            onChange={(url) => set('model3d', url)}
+            label="3D model (try-on)"
+            hint="Optional .glb for the live 3D try-on. Without it the 2D cut-out is used."
           />
           {form.images.length === 0 && (
             <p className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-xs text-amber-800">

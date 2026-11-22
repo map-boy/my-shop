@@ -33,7 +33,7 @@ service firebase.storage {
       allow read: if true;
       allow write: if isAdmin()
                    && request.resource.size < 15 * 1024 * 1024
-                   && request.resource.contentType.matches('image/.*|video/.*');
+                   && request.resource.contentType.matches('image/.*|video/.*|model/gltf-binary');
     }
   }
 }

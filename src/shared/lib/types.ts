@@ -24,6 +24,8 @@ export interface Product {
   compareAtPrice: number;  // 0 = no "was" price
   cost: number;            // internal, never shown to shoppers
   images: string[];
+  /** GLB URL for the 3D try-on (Firebase Storage). Products without it use the 2D path. */
+  model3d?: string;
   /** Optional product video (direct MP4/WebM URL). */
   videoUrl?: string;
   /** Storefront section (Cagua, Mangaze, ...). '' = none. */

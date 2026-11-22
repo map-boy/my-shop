@@ -13,10 +13,11 @@ import { useTT } from '../strings';
 import CameraView from './CameraView';
 import FitVerdict from './FitVerdict';
 import HeightPrompt from './HeightPrompt';
+import type { Garment3D } from '../three/Garment3D';
 const KEY = 'tryon.height';
 const loadH = () => { try { const n = Number(localStorage.getItem(KEY)); return n >= 120 && n <= 220 ? n : null; } catch { return null; } };
-interface Props { chart?: SizeRow[]; garmentUrl?: string | null }
-export default function TryOnPanel({ chart = DEFAULT_CHART, garmentUrl = null }: Props) {
+interface Props { chart?: SizeRow[]; garmentUrl?: string | null; model3dUrl?: string | null }
+export default function TryOnPanel({ chart = DEFAULT_CHART, garmentUrl = null, model3dUrl = null }: Props) {
   const t = useTT(); const gt = useGT();
   const [h, setH] = useState<number | null>(loadH); const [sel, setSel] = useState<string | null>(null);
   const [showG, setShowG] = useState(true); const [showZ, setShowZ] = useState(false);
@@ -25,15 +26,26 @@ export default function TryOnPanel({ chart = DEFAULT_CHART, garmentUrl = null }:
   const cur = sel ?? sess.fits?.best ?? chart[Math.floor(chart.length / 2)]?.size ?? null;
   const zonesRef = useRef<ZoneResult[] | undefined>(undefined); zonesRef.current = sess.fits?.rows.find((r) => r.size === cur)?.zones;
   const smooth = useRef<Smooth>({ cur: null });
+  const c3Ref = useRef<HTMLCanvasElement>(null); const g3 = useRef<Garment3D | null>(null);
+  useEffect(() => {
+    if (!model3dUrl || !c3Ref.current) return; let dead = false;
+    import('../three/Garment3D').then(async ({ Garment3D }) => {
+      if (dead || !c3Ref.current) return;
+      const g = new Garment3D(c3Ref.current);
+      try { await g.load('/api/img?u=' + encodeURIComponent(model3dUrl)); } catch { g.dispose(); return; }
+      if (dead) { g.dispose(); return; } g3.current = g;
+    }).catch(() => { /* keep 2D */ });
+    return () => { dead = true; g3.current?.dispose(); g3.current = null; };
+  }, [model3dUrl, h === null]);
   const live = useRef<{ src: CanvasImageSource | null; multiply: boolean; body: Body | null; row?: SizeRow; showG: boolean; showZ: boolean }>({ src: null, multiply: false, body: null, showG: true, showZ: true });
   live.current = { src: garment.src, multiply: garment.multiply, body: sess.body, row: chart.find((r) => r.size === cur), showG, showZ };
   const { push } = sess;
-  const lmsRef = useRef<{ l: Pt[] | null; t: number }>({ l: null, t: 0 });
-  const onLms = useCallback((l: Pt[] | null) => {
+  const lmsRef = useRef<{ l: Pt[] | null; t: number; w?: Pt[] | null }>({ l: null, t: 0 });
+  const onLms = useCallback((l: Pt[] | null, wl?: Pt[] | null) => {
     const v = cam.videoRef.current, c = canvasRef.current; if (!v || !c || !v.videoWidth) return;
     if (c.width !== v.videoWidth) { c.width = v.videoWidth; c.height = v.videoHeight; }
     push(l, v.videoWidth, v.videoHeight);
-    lmsRef.current = { l, t: performance.now() };
+    lmsRef.current = { l, t: performance.now(), w: wl ?? null };
   }, [push, cam.videoRef]);
   useEffect(() => {
     if (cam.state !== 'on') return;
@@ -44,8 +56,15 @@ export default function TryOnPanel({ chart = DEFAULT_CHART, garmentUrl = null }:
       if (c.width !== v.videoWidth) { c.width = v.videoWidth; c.height = v.videoHeight; }
       const { l: raw, t } = lmsRef.current; const l = raw && performance.now() - t < 400 ? raw : null;
       const L = live.current;
-      const under = (g: CanvasRenderingContext2D) => { if (l && L.showG && L.src && L.body && L.row) drawGarment(g, L.src, l, c.width, c.height, L.body.cmPerPx, L.row, smooth.current, L.multiply, v); };
+      const under = (g: CanvasRenderingContext2D) => { if (l && L.showG && !g3.current && L.src && L.body && L.row) drawGarment(g, L.src, l, c.width, c.height, L.body.cmPerPx, L.row, smooth.current, L.multiply, v); };
       drawOverlay(c, l, zonesRef.current, under, L.showZ && !!zonesRef.current);
+      const G = g3.current, c3 = c3Ref.current;
+      if (G && c3) {
+        if (c3.width !== c.width || c3.height !== c.height) G.resize(c.width, c.height);
+        const wl = lmsRef.current.w;
+        if (l && wl && L.showG) G.update(l as never, wl as never, c.width, c.height); else G.hide();
+        G.render();
+      }
     };
     loop();
     return () => cancelAnimationFrame(raf);
@@ -96,7 +115,7 @@ export default function TryOnPanel({ chart = DEFAULT_CHART, garmentUrl = null }:
   return (
     <div className="space-y-4">
       <h1 className="text-xl font-semibold">{t('title')}</h1>
-      <CameraView videoRef={cam.videoRef} canvasRef={canvasRef} mirrored={!photo && cam.facing === 'user'} />
+      <CameraView videoRef={cam.videoRef} canvasRef={canvasRef} canvas3dRef={model3dUrl ? c3Ref : undefined} mirrored={!photo && cam.facing === 'user'} />
       {msg && <p className="text-center text-sm text-neutral-600" role="status">{msg}</p>}
       <div className="flex gap-2">
         {on ? (<><button onClick={stopAll} className="flex-1 rounded-xl border border-neutral-300 px-4 py-3 font-medium">{t('stop')}</button><button onClick={() => { sess.reset(); smooth.current.cur = null; cam.flip(); }} className="flex-1 rounded-xl border border-neutral-300 px-4 py-3 font-medium">{t('flip')}</button></>)

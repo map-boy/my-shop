@@ -7,7 +7,7 @@ export default async function handler(req, res) {
     const r = await fetch(u.toString());
     if (!r.ok) { res.statusCode = 502; return res.end('upstream ' + r.status); }
     const type = r.headers.get('content-type') || 'image/jpeg';
-    if (!type.startsWith('image/')) { res.statusCode = 415; return res.end('not an image'); }
+    if (!type.startsWith('image/') && !/\.glb$/i.test(u.pathname)) { res.statusCode = 415; return res.end('not an image'); }
     res.setHeader('Content-Type', type);
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Cache-Control', 'public, max-age=86400');

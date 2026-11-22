@@ -38,7 +38,7 @@ export async function uploadFile(
   const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${safe}`;
   const task = uploadBytesResumable(ref(storage, path), file, {
     cacheControl: 'public,max-age=31536000',
-    contentType: file.type,
+    contentType: file.type || (/\.glb$/i.test(file.name) ? 'model/gltf-binary' : ''),
   });
 
   return new Promise((resolve, reject) => {

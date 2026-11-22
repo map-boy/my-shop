@@ -94,3 +94,16 @@ Pose and segmentation run on the device. Models load from jsDelivr and storage.g
 - "Use my photo": file input (`accept=image/*`; on phones it offers camera or gallery). The photo is scaled to 1280 px, pose runs on it (`detectForVideo` on a canvas, 3 passes), 20 identical samples feed `useFitSession` so size verdicts work, then the garment is drawn once on the photo canvas. Needs a visible person; otherwise `photoNoBody` is shown.
 - "Take picture": composites the live video (mirrored when the front camera is used) with the garment canvas, or exports the photo canvas, as JPEG. Uses Web Share with files where supported, else downloads `karibu-try-on.jpg`.
 - "Open camera" clears the photo and returns to live mode. Images never leave the device.
+
+## 3D phase 1 scaffold (added)
+- `ml/tools/garment_to_glb.py`: garment photo -> grabCut silhouette -> earcut mesh (front, back, side wall) -> textured double-sided GLB. Run: `python ml/tools/garment_to_glb.py in.jpg out.glb --width-cm 52`. Needs `pip install trimesh shapely mapbox-earcut`. Back is a mirror estimate. Clean in Blender before publishing.
+- `three/Garment3D.ts`: three.js overlay (ortho pixel camera). `load(glbUrl)`, `resize(w,h)`, `update(imgLandmarks, worldLandmarks, w, h)`, `render()`. Yaw from shoulder world z, clamped to 60 degrees. Not yet wired into TryOnPanel; no `model3d` field on Product yet.
+
+## 3D wiring (added)
+- `usePoseLoop` now passes `worldLandmarks` as 2nd arg of `onLms`. `TryOnPanel` takes `model3dUrl`; lazy-loads `three/Garment3D`, loads the GLB via `/api/img?u=` (proxy also allows `.glb` now, keep GLB under 4 MB for Vercel). When a GLB is loaded the 2D garment is skipped; 3D canvas sits above the overlay canvas in `CameraView`. `Product.model3d?: string` added to `shared/lib/types.ts`.
+- Still open: pass `model3d` from `TryOnPage`, GLB upload in `ProductEditor`, firestore.rules field check, depth occlusion proxy (head/neck currently covered by 3D), photo mode stays 2D.
+
+- TryOnPage now passes product.model3d to TryOnPanel as model3dUrl.
+
+- Admin: shared/components/GlbInput.tsx in ProductEditor (media tab) saves model3d; upload.ts sets contentType model/gltf-binary for .glb; storage.rules allows it (deploy: 
+px firebase-tools deploy --only storage --project my-shop-84749). GLB limit 4 MB (Vercel proxy).
