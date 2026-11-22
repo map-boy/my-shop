@@ -32,7 +32,7 @@ export default function TryOnPanel({ chart = DEFAULT_CHART, garmentUrl = null, m
     import('../three/Garment3D').then(async ({ Garment3D }) => {
       if (dead || !c3Ref.current) return;
       const g = new Garment3D(c3Ref.current);
-      try { await g.load('/api/img?u=' + encodeURIComponent(model3dUrl)); } catch { g.dispose(); return; }
+      try { await g.load(model3dUrl.startsWith('/') ? model3dUrl : '/api/img?u=' + encodeURIComponent(model3dUrl)); } catch { g.dispose(); return; }
       if (dead) { g.dispose(); return; } g3.current = g;
     }).catch(() => { /* keep 2D */ });
     return () => { dead = true; g3.current?.dispose(); g3.current = null; };

@@ -31,9 +31,10 @@ export class Garment3D {
     if (!L || !R || !this.root.children.length) { this.root.visible = false; return; }
     const lx = L.x * w, ly = L.y * h, rx = R.x * w, ry = R.y * h;
     const spx = Math.hypot(rx - lx, ry - ly), s = spx / SHOULDER_M;
-    const roll = Math.atan2(ry - ly, rx - lx);
+    let ddx = rx - lx, ddy = ry - ly; if (ddx < 0) { ddx = -ddx; ddy = -ddy; }
+    const roll = Math.atan2(ddy, ddx);
     const wl = world[11], wr = world[12];
-    const yawRaw = wl && wr ? Math.atan2(wr.z - wl.z, wr.x - wl.x) : 0;
+    const yawRaw = wl && wr ? Math.atan2(wl.z - wr.z, wl.x - wr.x) : 0;
     const lim = Math.PI / 3;
     this.yaw += (Math.max(-lim, Math.min(lim, yawRaw)) - this.yaw) * 0.3;
     this.root.visible = true;

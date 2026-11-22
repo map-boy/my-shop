@@ -23,7 +23,7 @@ export default function TryOnPage() {
         </label>
       )}
       {!url && <p className="text-sm text-neutral-600">{gt(dev ? 'noGarment' : 'openFromProduct')}</p>}
-      {(url || dev) && <TryOnPanel garmentUrl={url} chart={chart} model3dUrl={product?.model3d ?? null} />}
+      {(url || dev) && <TryOnPanel garmentUrl={url} chart={chart} model3dUrl={sp.get('glb') ?? product?.model3d ?? null} />}
     </div>
   );
 }

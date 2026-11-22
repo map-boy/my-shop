@@ -5,3 +5,4 @@ models/
 *.safetensors
 *.tflite
 .ipynb_checkpoints/
+export/*.glb

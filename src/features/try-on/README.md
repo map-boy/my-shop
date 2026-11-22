@@ -107,3 +107,5 @@ Pose and segmentation run on the device. Models load from jsDelivr and storage.g
 
 - Admin: shared/components/GlbInput.tsx in ProductEditor (media tab) saves model3d; upload.ts sets contentType model/gltf-binary for .glb; storage.rules allows it (deploy: 
 px firebase-tools deploy --only storage --project my-shop-84749). GLB limit 4 MB (Vercel proxy).
+
+- Fixed: roll/yaw in Garment3D.update now use left-minus-right shoulder direction (was ~180 deg off). Dev test: /try-on?dev=1&p=x&glb=/dev-glb/g1.glb loads a same-origin GLB from public/dev-glb/ (git-excluded). If the garment turns the wrong way, negate yawRaw.
