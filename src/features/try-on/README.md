@@ -14,7 +14,7 @@ Flag: `VITE_FEATURE_TRY_ON=true` (build time). Route: `/try-on?p=<slug>&img=<pho
 | 2D garment cut-out from the product photo (tap-point model, multiclass fallback, flood-fill fallback) | done, limited quality |
 | Head/neck drawn in front of garment (2D occlusion) | in progress, unverified |
 | Photo mode (upload or phone-camera photo) + Take picture (saves or shares the result) | done |
-| **3D garment (three.js + GLB), turns with the person** | **planned, not built** |
+| **3D garment (three.js + GLB), turns with the person** | **in progress: layer works (follows shoulders, roll, yaw, torso length); mesh quality poor, see "3D progress"** |
 
 ## Folder map
 
@@ -109,3 +109,18 @@ Pose and segmentation run on the device. Models load from jsDelivr and storage.g
 px firebase-tools deploy --only storage --project my-shop-84749). GLB limit 4 MB (Vercel proxy).
 
 - Fixed: roll/yaw in Garment3D.update now use left-minus-right shoulder direction (was ~180 deg off). Dev test: /try-on?dev=1&p=x&glb=/dev-glb/g1.glb loads a same-origin GLB from public/dev-glb/ (git-excluded). If the garment turns the wrong way, negate yawRaw.
+
+- Dev shortcut: when the URL has glb=, TryOnPanel defaults height to 170 and auto-opens the front camera. Test without the picker: /try-on?p=x&img=/dev-glb/g1.jpg&glb=/dev-glb/g1.glb (public/dev-glb/ is git-excluded).
+
+- Mesh tool: --rembg flag (pip install rembg, model silueta) replaces grabCut; mask eroded 2 px. Garment3D stretches garment length to shoulder-to-hip distance x1.15, clamped 0.85..1.25 of the width scale. Input must be a real garment on a plain background (artwork or mannequin photos give bad cut-outs).
+
+- ml/tools/garment_to_glb_inflate.py: volumetric garment (front/back surfaces inflated by distance from the silhouette edge, --depth-cm 9). Replaces the flat slab of garment_to_glb.py for the try-on. Still one-photo estimate; true shapes need image-to-3D (TripoSR) or a Blender model.
+
+## 3D progress (2026-11-23)
+Done: three.js layer over video, GLB per product (`model3d`), admin GLB upload, storage rules, proxy, dev test URL, roll/yaw fix, torso-length fit, rembg cut-out, inflated mesh tool, hemisphere+directional light.
+Not done / honest limits:
+- Mesh from one photo is a puffed silhouette, not a real garment (no sleeves, folds, back). Next: TripoSR on Colab (`ml/notebooks/triposr_garment_colab.py`), then simplify + webp, upload in admin.
+- No occlusion: head/neck/arms are covered by the garment (needs invisible body proxy in depth buffer).
+- No body-bend/skeleton; no fps measured on a phone; yaw sign unverified.
+- Test needs: stand back so shoulders AND hips are visible, real garment photo (not artwork/flat polygon).
+Next order: 1) real GLB via TripoSR, 2) occlusion proxy, 3) measure fps on phone, 4) skinning for bend.

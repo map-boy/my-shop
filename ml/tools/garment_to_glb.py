@@ -11,6 +11,7 @@ ap.add_argument('src'); ap.add_argument('out')
 ap.add_argument('--width-cm', type=float, default=52.0)
 ap.add_argument('--thick-cm', type=float, default=1.5)
 ap.add_argument('--eps', type=float, default=0.002)
+ap.add_argument('--rembg', action='store_true', help='AI background removal (better than grabCut)')
 a = ap.parse_args()
 
 img = cv2.imread(a.src, cv2.IMREAD_COLOR)
@@ -22,7 +23,12 @@ h, w = img.shape[:2]
 mask = np.zeros((h, w), np.uint8)
 cv2.grabCut(img, mask, (int(w*.03), int(h*.03), int(w*.94), int(h*.94)), np.zeros((1,65)), np.zeros((1,65)), 6, cv2.GC_INIT_WITH_RECT)
 m = (((mask == 1) | (mask == 3)).astype(np.uint8)) * 255
+if a.rembg:
+    from rembg import remove, new_session
+    m = np.array(remove(Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB)), session=new_session('silueta'), only_mask=True))
+    m = ((m > 127).astype(np.uint8)) * 255
 m = cv2.morphologyEx(m, cv2.MORPH_CLOSE, np.ones((7,7), np.uint8))
+m = cv2.erode(m, np.ones((3,3), np.uint8), iterations=2)
 cs, _ = cv2.findContours(m, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 c = max(cs, key=cv2.contourArea)
 pts = cv2.approxPolyDP(c, a.eps * cv2.arcLength(c, True), True)[:, 0, :].astype(float)

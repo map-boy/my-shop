@@ -15,13 +15,14 @@ import FitVerdict from './FitVerdict';
 import HeightPrompt from './HeightPrompt';
 import type { Garment3D } from '../three/Garment3D';
 const KEY = 'tryon.height';
-const loadH = () => { try { const n = Number(localStorage.getItem(KEY)); return n >= 120 && n <= 220 ? n : null; } catch { return null; } };
+const loadH = () => { try { const n = Number(localStorage.getItem(KEY)); return n >= 120 && n <= 220 ? n : (new URLSearchParams(location.search).has('glb') ? 170 : null); } catch { return null; } };
 interface Props { chart?: SizeRow[]; garmentUrl?: string | null; model3dUrl?: string | null }
 export default function TryOnPanel({ chart = DEFAULT_CHART, garmentUrl = null, model3dUrl = null }: Props) {
   const t = useTT(); const gt = useGT();
   const [h, setH] = useState<number | null>(loadH); const [sel, setSel] = useState<string | null>(null);
   const [showG, setShowG] = useState(true); const [showZ, setShowZ] = useState(false);
   const cam = useCamera(); const canvasRef = useRef<HTMLCanvasElement>(null);
+  useEffect(() => { if (new URLSearchParams(location.search).has('glb')) void cam.start('user'); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const sess = useFitSession(h ?? 170, chart); const garment = useGarment(garmentUrl);
   const cur = sel ?? sess.fits?.best ?? chart[Math.floor(chart.length / 2)]?.size ?? null;
   const zonesRef = useRef<ZoneResult[] | undefined>(undefined); zonesRef.current = sess.fits?.rows.find((r) => r.size === cur)?.zones;

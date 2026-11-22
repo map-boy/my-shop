@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
-type P3 = { x: number; y: number; z: number };
+type P3 = { x: number; y: number; z: number; visibility?: number };
 const SHOULDER_M = 0.40;
 
 export class Garment3D {
@@ -10,16 +10,18 @@ export class Garment3D {
   private cam = new THREE.OrthographicCamera(0, 1, 0, 1, -2000, 2000);
   private root = new THREE.Group();
   private yaw = 0;
+  private h0 = 0.5;
   constructor(canvas: HTMLCanvasElement) {
     this.r = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
     this.r.setClearColor(0x000000, 0);
-    this.scene.add(new THREE.AmbientLight(0xffffff, 1.6));
-    const d = new THREE.DirectionalLight(0xffffff, 1.2); d.position.set(0.3, -1, 1); this.scene.add(d);
+    this.scene.add(new THREE.HemisphereLight(0xffffff, 0x666666, 0.9));
+    const d = new THREE.DirectionalLight(0xffffff, 1.8); d.position.set(-0.6, -1, 1.5); this.scene.add(d);
     this.scene.add(this.root); this.root.visible = false;
   }
   async load(url: string) {
     const g = await new GLTFLoader().loadAsync(url);
     this.root.clear(); this.root.add(g.scene); this.root.visible = true;
+    this.h0 = new THREE.Box3().setFromObject(g.scene).getSize(new THREE.Vector3()).y || 0.5;
   }
   resize(w: number, h: number) {
     this.r.setSize(w, h, false);
@@ -39,7 +41,12 @@ export class Garment3D {
     this.yaw += (Math.max(-lim, Math.min(lim, yawRaw)) - this.yaw) * 0.3;
     this.root.visible = true;
     this.root.position.set((lx + rx) / 2, (ly + ry) / 2 - 0.04 * s, 0);
-    this.root.scale.set(s, -s, s);
+    const lh = img[23], rh = img[24]; let sy = s;
+    if (lh && rh && (lh.visibility ?? 1) > 0.5 && (rh.visibility ?? 1) > 0.5) {
+      const tp = Math.hypot(((lh.x + rh.x) / 2) * w - (lx + rx) / 2, ((lh.y + rh.y) / 2) * h - (ly + ry) / 2);
+      sy = Math.max(0.85 * s, Math.min(1.25 * s, (tp * 1.15) / this.h0));
+    }
+    this.root.scale.set(s, -sy, s);
     this.root.rotation.set(0, this.yaw, roll);
   }
   hide() { this.root.visible = false; }
